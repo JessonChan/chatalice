@@ -207,6 +207,7 @@ EventsOn("appendMessage", (data) => {
             <div class="flex-grow">
               <!-- <p class="text-gray-800 text-left">{{ markdown.render(msg.text) }}</p> -->
               <p class="text-gray-800 text-left" v-html="markdownToHtml(msg.text)"></p>
+              <i class="fas fa-spinner fa-2x fa-spin text-gray-800" v-if="!msg.text"></i>
             </div>
           </div>
         </div>
