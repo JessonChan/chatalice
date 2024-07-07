@@ -56,6 +56,9 @@ func (a *App) call(fn string, args string) any {
 			messages := store.GetMessageList(chat.ChatID)
 			messageResp := []map[string]any{}
 			for _, message := range messages {
+				if message.Content == "" {
+					continue
+				}
 				messageResp = append(messageResp, map[string]any{
 					"id":     message.ID,
 					"isUser": message.Role == "user",
