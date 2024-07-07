@@ -11,6 +11,37 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+func Title(model store.Model, userInput string) (title string) {
+	defer func() {
+		if title == "" {
+			title = "Untitled"
+		}
+	}()
+	clietConfig := openai.DefaultConfig(model.Key)
+	clietConfig.BaseURL = model.BaseURL
+	c := openai.NewClientWithConfig(clietConfig)
+	messages := []openai.ChatCompletionMessage{
+		{
+			Role:    "system",
+			Content: "你是一个非常善于起标题的机器，可以根据用户的一个输入，生成一个不超过16个字的标题,你的回复只需要给定这个标题本身，不需要其它任何的多余信息或符号",
+		},
+		{
+			Role:    "user",
+			Content: userInput,
+		},
+	}
+	resp, err := c.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
+		Model:    model.ModelName,
+		Messages: messages,
+	})
+	if err != nil {
+		fmt.Printf("ChatCompletion error: %v\n", err)
+		return
+	}
+	title = resp.Choices[0].Message.Content
+	return
+}
+
 func Stream(model store.Model, msgHistory []store.Message, userInput string, callback func(string)) {
 	clietConfig := openai.DefaultConfig(model.Key)
 	clietConfig.BaseURL = model.BaseURL

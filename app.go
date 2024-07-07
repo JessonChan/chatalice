@@ -49,18 +49,49 @@ func (a *App) call(fn string, args string) any {
 		}
 		fmt.Printf("insertModel: %v\n", m)
 		store.InsertModel(m)
-	case "":
+	case "getChats":
+		list := store.GetChatList()
+		resp := []map[string]any{}
+		for _, chat := range list {
+			messages := store.GetMessageList(chat.ChatID)
+			messageResp := []map[string]any{}
+			for _, message := range messages {
+				messageResp = append(messageResp, map[string]any{
+					"id":     message.ID,
+					"isUser": message.Role == "user",
+					"text":   message.Content,
+				})
+			}
+			resp = append(resp, map[string]any{
+				"id":       chat.ChatID,
+				"title":    chat.Title,
+				"messages": messageResp,
+			})
+		}
+		return resp
 	case "hello":
 		msg := store.Message{}
 		json.Unmarshal([]byte(args), &msg)
 		messages := store.GetMessageList(msg.ChatID)
 		model := store.GetModelByID(msg.ModelID)
-		fmt.Println("model:", model)
-		if msg.ChatID == 0 {
-			// msg.ChatID = store.InsertChat(store.Chat{
-			// SystemPrompt: "you are a bot",
-			// Title:        "New Chat",
-			// })
+		chat := store.GetChatByChatID(msg.ChatID)
+		if chat.ID == 0 {
+			// 新建一个Chat
+			chat = store.Chat{
+				Title:  "Untitled",
+				ChatID: msg.ChatID,
+			}
+			store.InsertChat(&chat)
+		}
+		if chat.Title == "Untitled" {
+			go func() {
+				title := llm.Title(model, msg.Content)
+				store.UpdateChatTitleByChatID(msg.ChatID, title)
+				runtime.EventsEmit(a.ctx, "updateChatTitle", toJSON(map[string]any{
+					"id":    msg.ChatID,
+					"title": title,
+				}))
+			}()
 		}
 		msg.Role = "user"
 		store.InsertMessage(msg)

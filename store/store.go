@@ -59,6 +59,7 @@ type Model struct {
 type Chat struct {
 	gorm.Model
 	Title        string `json:"title"`
+	ChatID       uint   `json:"chatId"`
 	SystemPrompt string `json:"systemPrompt"`
 }
 
@@ -102,20 +103,25 @@ func GetModelByID(id uint) Model {
 func GetChatList() []Chat {
 	db := getDb()
 	var chats []Chat
-	db.Find(&chats)
+	db.Order("id desc").Find(&chats)
 	return chats
 }
 
-func GetChatByID(id uint) Chat {
+func GetChatByChatID(id uint) Chat {
 	db := getDb()
 	var chat Chat
-	db.First(&chat, id)
+	db.Where("chat_id = ?", id).Find(&chat)
 	return chat
 }
 
-func InsertChat(chat Chat) uint {
+func UpdateChatTitleByChatID(id uint, title string) {
 	db := getDb()
-	db.Create(&chat)
+	db.Model(&Chat{}).Where("chat_id = ?", id).Update("title", title)
+}
+
+func InsertChat(chat *Chat) uint {
+	db := getDb()
+	db.Create(chat)
 	return chat.ID
 }
 

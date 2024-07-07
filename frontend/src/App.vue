@@ -3,13 +3,7 @@ import { ref, onMounted, computed, nextTick } from 'vue';
 import { Greet, Call } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 
-const chats = ref([
-  {
-    title: "Untitled",
-    messages: [],
-    id: 0
-  }
-]);
+const chats = ref([]);
 const currentChatIndex = ref(0);
 const userInput = ref('');
 const messageContainer = ref(null);
@@ -97,6 +91,17 @@ const refreshModelList = () => {
   })
 }
 
+const getChats = () => {
+  Call("getChats", "").then(response => {
+    chats.value = JSON.parse(response);
+    console.log(response, chats.value)
+    if (chats.value.length == 0) {
+      chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime() }];
+    }
+    currentChatIndex.value = 0
+  })
+}
+
 onMounted(() => {
   menuItems.value = [
     { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
@@ -108,6 +113,7 @@ onMounted(() => {
     { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
   ];
   refreshModelList();
+  getChats();
   window.addEventListener('keydown', handleKeyDown);
 
   // Clean up the event listener on unmount
@@ -117,7 +123,7 @@ onMounted(() => {
 });
 
 const newChat = () => {
-  chats.value.unshift({ title: "Untitled", messages: [] });
+  chats.value.unshift({ title: "Untitled", messages: [], id: new Date().getTime() });
   currentChatIndex.value = 0;
 };
 
@@ -134,6 +140,12 @@ const markdownToHtml = (markdownText) => {
 EventsOn("addMessage", (message) => {
   currentChat.value.messages.push({ text: message, isUser: false });
 });
+
+EventsOn("updateChatTitle", (data) => {
+  let chat = JSON.parse(data);
+  chats.value.find(({ id }) => id === chat.id).title = chat.title;
+});
+
 
 EventsOn("appendMessage", (data) => {
   console.log("appendMessage", data);
@@ -182,7 +194,7 @@ EventsOn("appendMessage", (data) => {
     <div class="flex-1 flex flex-col">
       <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <div class="flex items-center">
-          <span class="text-lg font-medium">{{ currentChat.title }}</span>
+          <span class="text-lg font-medium">{{ currentChat?.title }}</span>
           <div class="relative pl-2">
             <span @click="toggleSettingsList"
               class="bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm cursor-pointer">{{ currentSettingName
@@ -198,7 +210,7 @@ EventsOn("appendMessage", (data) => {
 
       </div>
       <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto message-scroll">
-        <div v-for="(msg, index) in currentChat.messages" :key="index" class="mb-4">
+        <div v-for="(msg, index) in currentChat?.messages" :key="index" class="mb-4">
           <div class="flex items-start ">
             <div class="flex-shrink-0 mr-3">
               <i
