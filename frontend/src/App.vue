@@ -30,8 +30,10 @@ const toggleSettingsList = () => {
   }
 };
 
-const selectSetting = (name) => {
-  currentSettingName.value = name;
+const selectSetting = (name, id) => {
+  console.log(name, id)
+  currentSettingName.value = name
+  currentModelId.value = id
   showSettingsList.value = false;
 };
 
@@ -81,13 +83,13 @@ const handleKeyDown = (event) => {
 
 const refreshModelList = () => {
   Call("getModelList", "").then(response => {
-    submittedSettings.value = response;
     let modelList = JSON.parse(response);
     if (modelList.length > 0) {
-      submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model }));
+      submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model, id: item.ID }));
       currentSettingName.value = modelList[0].name;
       currentModelId.value = modelList[0].ID;
     }
+    console.log(modelList, submittedSettings.value)
   })
 }
 
@@ -200,8 +202,8 @@ EventsOn("appendMessage", (data) => {
               class="bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm cursor-pointer">{{ currentSettingName
               }}</span>
             <div v-if="showSettingsList" class="absolute top-full left-0 mt-1 bg-white border rounded shadow-lg z-10">
-              <div v-for="setting in submittedSettings" :key="setting.name" @click="selectSetting(setting.name)"
-                class="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+              <div v-for="setting in submittedSettings" :key="setting.name"
+                @click="selectSetting(setting.name, setting.id)" class="px-4 py-2 hover:bg-gray-100 cursor-pointer">
                 {{ setting.name }}
               </div>
             </div>
