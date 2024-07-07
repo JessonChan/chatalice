@@ -1,12 +1,17 @@
 package store
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/glebarez/sqlite" // Pure go SQLite driver, checkout https://github.com/glebarez/sqlite for details
 	"gorm.io/gorm"
 )
+
+func init() {
+	getDb(true)
+}
 
 func getDb(initDb ...bool) *gorm.DB {
 	configPath, err := os.UserConfigDir()
@@ -22,20 +27,24 @@ func getDb(initDb ...bool) *gorm.DB {
 	// Migrate the schema
 	if len(initDb) > 0 && initDb[0] {
 		db.AutoMigrate(&Model{})
+		db.AutoMigrate(&Chat{})
+		db.AutoMigrate(&Message{})
 	}
 	return db
 }
 
 type Model struct {
 	gorm.Model
-	Name    string `json:"name"`
-	API_KEY string `json:"api_key"`
-	BaseURL string `json:"base_url"`
+	Name      string `json:"name"`
+	ModelName string `json:"model"`
+	Key       string `json:"key"`
+	BaseURL   string `json:"baseUrl"`
 }
 
 type Chat struct {
 	gorm.Model
-	Title string `json:"title"`
+	Title        string `json:"title"`
+	SystemPrompt string `json:"systemPrompt"`
 }
 
 type Message struct {
@@ -54,8 +63,11 @@ func GetModelList() []Model {
 }
 
 func InsertModel(model Model) {
-	db := getDb(true)
-	db.Create(&model)
+	db := getDb()
+	err := db.Create(&model)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func DeleteModelByID(id uint) {
@@ -73,7 +85,7 @@ func GetChatList() []Chat {
 }
 
 func InsertChat(chat Chat) {
-	db := getDb(true)
+	db := getDb()
 	db.Create(&chat)
 }
 

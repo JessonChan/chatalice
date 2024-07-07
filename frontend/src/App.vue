@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
-import { Greet } from '../wailsjs/go/main/App';
+import { Greet, Call } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
 
 const chats = ref([
@@ -22,7 +22,8 @@ const currentSettingName = ref('Setting Models');
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
   currentSettingName.value = settings.value.name;
-  settings.value = { name: '', key: '', baseUrl: '' };
+  Call("insertModel", JSON.stringify(settings.value));
+  settings.value = { name: '', key: '', baseUrl: '', model: '' };
 };
 
 const toggleSettingsList = () => {
@@ -89,6 +90,14 @@ onMounted(() => {
     },
     { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
   ];
+  Call("getModelList", "").then(response => {
+    submittedSettings.value = response;
+    let modelList = JSON.parse(response);
+    if (modelList.length > 0) {
+      submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model }));
+      currentSettingName.value = modelList[0].name;
+    }
+  });
   window.addEventListener('keydown', handleKeyDown);
 
   // Clean up the event listener on unmount
@@ -228,13 +237,19 @@ EventsOn("appendMessage", (message) => {
             <input v-model="settings.baseUrl" type="text"
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
           </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Model</label>
+            <input v-model="settings.model" type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+          </div>
           <button type="submit" class="w-full bg-blue-500 text-white rounded-md py-2 hover:bg-blue-600">Submit</button>
         </form>
         <div class="mt-4">
           <h3 class="font-bold mb-2">Submitted Settings:</h3>
           <ul class="list-disc pl-5">
             <li v-for="(setting, index) in submittedSettings" :key="index" class="flex justify-between items-center">
-              <span>Name: {{ setting.name }}, Key: {{ setting.key }}, Base URL: {{ setting.baseUrl }}</span>
+              <span>Name: {{ setting.name }}, Key: {{ setting.key }}, Base URL: {{ setting.baseUrl }},Model:{{
+                setting.model }}</span>
               <button @click="deleteSetting(index)" class="text-red-500 hover:text-red-700">
                 <i class="fas fa-trash-alt"></i>
               </button>
