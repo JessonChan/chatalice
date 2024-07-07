@@ -1,10 +1,13 @@
 package main
 
 import (
+	"chatalice/llm"
 	"chatalice/store"
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -32,7 +35,7 @@ func (a *App) Call(fn string, args string) string {
 	return toJSON(a.call(fn, args))
 }
 func (a *App) call(fn string, args string) any {
-	fmt.Println(fn, args)
+	fmt.Println("func called", fn, args)
 	switch fn {
 	case "getModelList":
 		return store.GetModelList()
@@ -46,6 +49,39 @@ func (a *App) call(fn string, args string) any {
 		}
 		fmt.Printf("insertModel: %v\n", m)
 		store.InsertModel(m)
+	case "":
+	case "hello":
+		msg := store.Message{}
+		json.Unmarshal([]byte(args), &msg)
+		messages := store.GetMessageList(msg.ChatID)
+		model := store.GetModelByID(msg.ModelID)
+		fmt.Println("model:", model)
+		if msg.ChatID == 0 {
+			// msg.ChatID = store.InsertChat(store.Chat{
+			// SystemPrompt: "you are a bot",
+			// Title:        "New Chat",
+			// })
+		}
+		msg.Role = "user"
+		store.InsertMessage(msg)
+		answerID := store.InsertMessage(store.Message{
+			ChatID:  msg.ChatID,
+			Role:    "assistant",
+			Content: "",
+		})
+		go llm.Stream(model, messages, msg.Content, func(chuckText string) {
+			fmt.Println("callback", answerID)
+			bs, _ := json.Marshal(map[string]any{
+				"message_id": answerID,
+				"text":       chuckText,
+			})
+			store.UpdateMessageContentByID(answerID, chuckText)
+			runtime.EventsEmit(a.ctx, "appendMessage", string(bs))
+		})
+		return map[string]any{
+			"message_id": answerID,
+			"text":       "",
+		}
 	}
 	return ""
 }

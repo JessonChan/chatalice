@@ -6,6 +6,7 @@ toolchain go1.21.5
 
 require (
 	github.com/glebarez/sqlite v1.11.0
+	github.com/sashabaranov/go-openai v1.26.2
 	github.com/wailsapp/wails/v2 v2.9.1
 	gorm.io/gorm v1.25.10
 )

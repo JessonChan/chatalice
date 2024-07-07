@@ -6,7 +6,8 @@ import { EventsOn } from '../wailsjs/runtime';
 const chats = ref([
   {
     title: "Untitled",
-    messages: []
+    messages: [],
+    id: 0
   }
 ]);
 const currentChatIndex = ref(0);
@@ -18,6 +19,7 @@ const showSettingsList = ref(false);
 const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
 const currentSettingName = ref('Setting Models');
+const currentModelId = ref(0);
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
@@ -61,14 +63,17 @@ const scrollToBottom = () => {
 const sendMessage = () => {
   if (userInput.value.trim() !== '') {
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
-    Greet(JSON.stringify(currentChat.value.messages))
-      .then(response => {
-        currentChat.value.messages.push({ text: response, isUser: false });
-        scrollToBottom();
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+    Call("hello", JSON.stringify({
+      Content: userInput.value.trim(),
+      ChatID: chats.value[currentChatIndex.value].id,
+      ModelID: currentModelId.value,
+    })).then(response => {
+      response = JSON.parse(response);
+      currentChat.value.messages.push({ text: response.text, isUser: false, id: response.message_id });
+      scrollToBottom();
+    }).catch(error => {
+      console.error('Error:', error);
+    });
     userInput.value = '';
   }
 };
@@ -80,6 +85,18 @@ const handleKeyDown = (event) => {
   }
 };
 
+const refreshModelList = () => {
+  Call("getModelList", "").then(response => {
+    submittedSettings.value = response;
+    let modelList = JSON.parse(response);
+    if (modelList.length > 0) {
+      submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model }));
+      currentSettingName.value = modelList[0].name;
+      currentModelId.value = modelList[0].ID;
+    }
+  })
+}
+
 onMounted(() => {
   menuItems.value = [
     { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
@@ -90,14 +107,7 @@ onMounted(() => {
     },
     { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
   ];
-  Call("getModelList", "").then(response => {
-    submittedSettings.value = response;
-    let modelList = JSON.parse(response);
-    if (modelList.length > 0) {
-      submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model }));
-      currentSettingName.value = modelList[0].name;
-    }
-  });
+  refreshModelList();
   window.addEventListener('keydown', handleKeyDown);
 
   // Clean up the event listener on unmount
@@ -125,10 +135,14 @@ EventsOn("addMessage", (message) => {
   currentChat.value.messages.push({ text: message, isUser: false });
 });
 
-EventsOn("appendMessage", (message) => {
-  const lastMessage = currentChat.value.messages[currentChat.value.messages.length - 1];
-  if (lastMessage) {
-    lastMessage.text += message;
+EventsOn("appendMessage", (data) => {
+  console.log("appendMessage", data);
+  let message = JSON.parse(data);
+  console.log("message", message, currentChat.value.messages);
+  // loop currentChat.messages to find the id===message.message_id and upate the text+=text
+  const msg = currentChat.value.messages.find(({ id }) => id === message.message_id);
+  if (msg) {
+    msg.text += message.text;
     scrollToBottom();
   }
 });

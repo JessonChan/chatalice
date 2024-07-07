@@ -2,25 +2,39 @@ package store
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/glebarez/sqlite" // Pure go SQLite driver, checkout https://github.com/glebarez/sqlite for details
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func init() {
 	getDb(true)
 }
 
+var sqlDB *gorm.DB
+
 func getDb(initDb ...bool) *gorm.DB {
+	if sqlDB != nil {
+		return sqlDB
+	}
 	configPath, err := os.UserConfigDir()
 	if err != nil {
 		// TODO 更好的错误处理
 		panic(err)
 	}
+	// TODO dbFilePath := filepath.Join(filepath.Join(configPath, "ChatAlice"), "chat.db")
 	dbFilePath := filepath.Join(configPath, "chat.db")
-	db, err := gorm.Open(sqlite.Open(dbFilePath), &gorm.Config{})
+	fmt.Println("db file path:", dbFilePath)
+	db, err := gorm.Open(sqlite.Open(dbFilePath), &gorm.Config{
+		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				LogLevel: logger.Info, // 设置日志级别为 "debug"
+			}),
+	})
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -30,6 +44,7 @@ func getDb(initDb ...bool) *gorm.DB {
 		db.AutoMigrate(&Chat{})
 		db.AutoMigrate(&Message{})
 	}
+	sqlDB = db
 	return db
 }
 
@@ -50,8 +65,8 @@ type Chat struct {
 type Message struct {
 	gorm.Model
 	Content string `json:"content"`
-	ChatID  uint   `json:"chat_id"`
-	ModelID uint   `json:"model_id"`
+	ChatID  uint   `json:"chatId"`
+	ModelID uint   `json:"modelId"`
 	Role    string `json:"role"`
 }
 
@@ -77,6 +92,13 @@ func DeleteModelByID(id uint) {
 	db.Delete(m)
 }
 
+func GetModelByID(id uint) Model {
+	db := getDb()
+	var model Model
+	db.First(&model, id)
+	return model
+}
+
 func GetChatList() []Chat {
 	db := getDb()
 	var chats []Chat
@@ -84,9 +106,17 @@ func GetChatList() []Chat {
 	return chats
 }
 
-func InsertChat(chat Chat) {
+func GetChatByID(id uint) Chat {
+	db := getDb()
+	var chat Chat
+	db.First(&chat, id)
+	return chat
+}
+
+func InsertChat(chat Chat) uint {
 	db := getDb()
 	db.Create(&chat)
+	return chat.ID
 }
 
 func DeleteChatByID(id uint) {
@@ -99,12 +129,12 @@ func DeleteChatByID(id uint) {
 func GetMessageList(chatID uint) []Message {
 	db := getDb()
 	var messages []Message
-	db.Where("chat_id = ?", chatID).Find(&messages)
+	db.Where("chat_id = ?", chatID).Order("id asc").Find(&messages)
 	return messages
 }
 
 func InsertMessage(message Message) uint {
-	db := getDb(true)
+	db := getDb()
 	db.Create(&message)
 	return message.ID
 }
@@ -116,6 +146,10 @@ func DeleteMessageByID(id uint) {
 	db.Delete(m)
 }
 func UpdateMessageContentByID(id uint, content string) {
+	fmt.Println("update message content", id, content)
 	db := getDb()
-	db.Model(&Message{}).Where("id = ?", id).Update("content", content)
+	er := db.Model(&Message{}).Where("id = ?", id).Update("content", gorm.Expr("content || ?", content))
+	if er.Error != nil {
+		fmt.Sprintf("update error %v", er.Error)
+	}
 }
