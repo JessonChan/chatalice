@@ -23,7 +23,7 @@ func Title(model store.Model, userInput string) (title string) {
 	messages := []openai.ChatCompletionMessage{
 		{
 			Role:    "system",
-			Content: "你是一个非常善于起标题的机器，可以根据用户的一个输入，生成一个不超过16个字的标题,你的回复只需要给定这个标题本身，不需要其它任何的多余信息或符号",
+			Content: "你是一个非常善于起标题的机器，可以根据用户的一个输入,想到可能的输出，生成一个不超过16个字的标题,你的回复务必只需要给定这个标题本身，不需要其它任何的多余信息或符号",
 		},
 		{
 			Role:    "user",

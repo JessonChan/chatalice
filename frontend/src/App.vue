@@ -102,6 +102,7 @@ const getChats = () => {
     }
     currentChatIndex.value = 0
     currentModelId.value = chats.value[0].modelId
+    currentSettingName.value = submittedSettings.value[0].name
   })
 }
 
