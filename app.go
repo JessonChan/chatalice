@@ -69,6 +69,7 @@ func (a *App) call(fn string, args string) any {
 				"id":       chat.ChatID,
 				"title":    chat.Title,
 				"messages": messageResp,
+				"modelId":  chat.ModelID,
 			})
 		}
 		return resp
@@ -81,8 +82,9 @@ func (a *App) call(fn string, args string) any {
 		if chat.ID == 0 {
 			// 新建一个Chat
 			chat = store.Chat{
-				Title:  "Untitled",
-				ChatID: msg.ChatID,
+				Title:   "Untitled",
+				ChatID:  msg.ChatID,
+				ModelID: msg.ModelID,
 			}
 			store.InsertChat(&chat)
 		}
@@ -95,6 +97,9 @@ func (a *App) call(fn string, args string) any {
 					"title": title,
 				}))
 			}()
+		}
+		if chat.ModelID != msg.ModelID {
+			store.UpdateChatModelIDByChatID(msg.ChatID, msg.ModelID)
 		}
 		// TODO a lot of checks
 		msg.Role = "user"

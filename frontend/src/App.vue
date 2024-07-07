@@ -94,13 +94,14 @@ const refreshModelList = () => {
 }
 
 const getChats = () => {
-  Call("getChats", "").then(response => {
-    chats.value = JSON.parse(response);
-    console.log(response, chats.value)
+  Call("getChats", "").then(data => {
+    let response = JSON.parse(data);
+    chats.value = response.map(item => ({ title: item.title, messages: item.messages, id: item.id, modelId: item.modelId }));
     if (chats.value.length == 0) {
-      chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime() }];
+      chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime(), modelId: submittedSettings.value[0].id }];
     }
     currentChatIndex.value = 0
+    currentModelId.value = chats.value[0].modelId
   })
 }
 
@@ -131,6 +132,8 @@ const newChat = () => {
 
 const selectChat = (index) => {
   currentChatIndex.value = index;
+  currentModelId.value = chats.value[currentChatIndex.value].modelId || currentModelId.value
+  currentSettingName.value = submittedSettings.value.find(item => item.id === currentModelId.value)?.name
 };
 
 const markdownToHtml = (markdownText) => {
@@ -221,7 +224,7 @@ EventsOn("appendMessage", (data) => {
             <div class="flex-grow">
               <!-- <p class="text-gray-800 text-left">{{ markdown.render(msg.text) }}</p> -->
               <p class="text-gray-800 text-left" v-html="markdownToHtml(msg.text)"></p>
-              <i class="fas fa-spinner fa-2x fa-spin text-gray-800" v-if="!msg.text"></i>
+              <i class="fas fa-spinner fa-1x fa-spin text-gray-800" v-if="!msg.text"></i>
             </div>
           </div>
         </div>
