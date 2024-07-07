@@ -93,6 +93,7 @@ func (a *App) call(fn string, args string) any {
 				}))
 			}()
 		}
+		// TODO a lot of checks
 		msg.Role = "user"
 		store.InsertMessage(msg)
 		answerID := store.InsertMessage(store.Message{
