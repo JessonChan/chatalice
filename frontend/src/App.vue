@@ -20,6 +20,39 @@ export default {
     const userInput = ref('');
     const messageContainer = ref(null);
     const menuItems = ref([])
+    const showSettings = ref(false)
+    const showSettingsList = ref(false)
+    const settings = ref({ name: '', key: '', baseUrl: '' })
+    const submittedSettings = ref([])
+    const currentSettingName = ref('Setting Models')
+
+    const submitSettings = () => {
+      submittedSettings.value.push({ ...settings.value })
+      currentSettingName.value = settings.value.name
+      settings.value = { name: '', key: '', baseUrl: '' }
+    }
+
+    const toggleSettingsList = () => {
+      if (submittedSettings.value.length > 0) {
+        showSettingsList.value = !showSettingsList.value
+      } else {
+        showSettings.value = true
+      }
+    }
+
+    const selectSetting = (name) => {
+      currentSettingName.value = name
+      showSettingsList.value = false
+    }
+    const deleteSetting = (index) => {
+      submittedSettings.value.splice(index, 1)
+      if (submittedSettings.value.length === 0) {
+        currentSettingName.value = 'gpt-4.0'
+      } else if (currentSettingName.value === submittedSettings.value[index]?.name) {
+        currentSettingName.value = submittedSettings.value[0].name
+      }
+    }
+
 
     const currentChat = computed(() => chats.value[currentChatIndex.value]);
 
@@ -57,7 +90,11 @@ export default {
     onMounted(() => {
       menuItems.value = [
         { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
-        { icon: 'fas fa-cog', text: 'Settings', onClickMethod: newChat },
+        {
+          icon: 'fas fa-cog', text: 'Settings', onClickMethod: () => {
+            showSettings.value = true
+          }
+        },
         { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
       ],
         window.addEventListener('keydown', handleKeyDown);
@@ -109,6 +146,15 @@ export default {
       newChat,
       selectChat,
       markdownToHtml,
+      showSettings,
+      showSettingsList,
+      settings,
+      submittedSettings,
+      currentSettingName,
+      submitSettings,
+      toggleSettingsList,
+      selectSetting,
+      deleteSetting
     };
   }
 };
@@ -149,7 +195,17 @@ export default {
       <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <div class="flex items-center">
           <span class="text-lg font-medium">{{ currentChat.title }}</span>
-          <span class="ml-2 px-2 py-1 text-xs bg-orange-200 text-orange-800 rounded">gpt-4.0</span>
+          <div class="relative pl-2">
+            <span @click="toggleSettingsList"
+              class="bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm cursor-pointer">{{ currentSettingName
+              }}</span>
+            <div v-if="showSettingsList" class="absolute top-full left-0 mt-1 bg-white border rounded shadow-lg z-10">
+              <div v-for="setting in submittedSettings" :key="setting.name" @click="selectSetting(setting.name)"
+                class="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                {{ setting.name }}
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -183,6 +239,45 @@ export default {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+
+    <!-- Settings Modal -->
+    <div v-if="showSettings" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 w-96">
+        <h2 class="text-2xl font-bold mb-4">Settings</h2>
+        <form @submit.prevent="submitSettings">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input v-model="settings.name" type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Key</label>
+            <input v-model="settings.key" type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Base URL</label>
+            <input v-model="settings.baseUrl" type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+          </div>
+          <button type="submit" class="w-full bg-blue-500 text-white rounded-md py-2 hover:bg-blue-600">Submit</button>
+        </form>
+        <div class="mt-4">
+          <h3 class="font-bold mb-2">Submitted Settings:</h3>
+          <ul class="list-disc pl-5">
+            <li v-for="(setting, index) in submittedSettings" :key="index" class="flex justify-between items-center">
+              <span>Name: {{ setting.name }}, Key: {{ setting.key }}, Base URL: {{ setting.baseUrl }}</span>
+              <button @click="deleteSetting(index)" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+        <button @click="showSettings = false"
+          class="mt-4 w-full bg-gray-300 text-gray-800 rounded-md py-2 hover:bg-gray-400">Close</button>
       </div>
     </div>
   </div>
