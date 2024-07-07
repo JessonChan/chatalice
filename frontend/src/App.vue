@@ -1,163 +1,128 @@
-<script>
+<script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
-// 假设 Greet 函数是从一个名为 'wails' 的模块导入的
-import { Greet } from '../wailsjs/go/main/App'
-import { EventsOn } from '../wailsjs/runtime'
+import { Greet } from '../wailsjs/go/main/App';
+import { EventsOn } from '../wailsjs/runtime';
 
+const chats = ref([
+  {
+    title: "Untitled",
+    messages: []
+  }
+]);
+const currentChatIndex = ref(0);
+const userInput = ref('');
+const messageContainer = ref(null);
+const menuItems = ref([]);
+const showSettings = ref(false);
+const showSettingsList = ref(false);
+const settings = ref({ name: '', key: '', baseUrl: '' });
+const submittedSettings = ref([]);
+const currentSettingName = ref('Setting Models');
 
+const submitSettings = () => {
+  submittedSettings.value.push({ ...settings.value });
+  currentSettingName.value = settings.value.name;
+  settings.value = { name: '', key: '', baseUrl: '' };
+};
 
-export default {
-  name: 'App',
-  setup() {
-    const chats = ref([
-      {
-        title: "Untitled",
-        messages: [
-        ]
-      },
-    ]);
-    const currentChatIndex = ref(0);
-    const userInput = ref('');
-    const messageContainer = ref(null);
-    const menuItems = ref([])
-    const showSettings = ref(false)
-    const showSettingsList = ref(false)
-    const settings = ref({ name: '', key: '', baseUrl: '' })
-    const submittedSettings = ref([])
-    const currentSettingName = ref('Setting Models')
-
-    const submitSettings = () => {
-      submittedSettings.value.push({ ...settings.value })
-      currentSettingName.value = settings.value.name
-      settings.value = { name: '', key: '', baseUrl: '' }
-    }
-
-    const toggleSettingsList = () => {
-      if (submittedSettings.value.length > 0) {
-        showSettingsList.value = !showSettingsList.value
-      } else {
-        showSettings.value = true
-      }
-    }
-
-    const selectSetting = (name) => {
-      currentSettingName.value = name
-      showSettingsList.value = false
-    }
-    const deleteSetting = (index) => {
-      submittedSettings.value.splice(index, 1)
-      if (submittedSettings.value.length === 0) {
-        currentSettingName.value = 'gpt-4.0'
-      } else if (currentSettingName.value === submittedSettings.value[index]?.name) {
-        currentSettingName.value = submittedSettings.value[0].name
-      }
-    }
-
-
-    const currentChat = computed(() => chats.value[currentChatIndex.value]);
-
-    const scrollToBottom = () => {
-      nextTick(() => {
-        if (messageContainer.value) {
-          messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
-        }
-      });
-    };
-
-    const sendMessage = () => {
-      if (userInput.value.trim() !== '') {
-        currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
-        // TODO use struct directly
-        Greet(JSON.stringify(currentChat.value.messages))
-          .then(response => {
-            currentChat.value.messages.push({ text: response, isUser: false });
-            scrollToBottom();
-          })
-          .catch(error => {
-            console.error('Error:', error);
-          });
-        userInput.value = '';
-      }
-    };
-
-    const handleKeyDown = (event) => {
-      if ((event.key === 'Enter' && event.ctrlKey && !navigator.platform.toUpperCase().includes('MAC')) ||
-        (event.key === 'Enter' && event.metaKey && navigator.platform.toUpperCase().includes('MAC'))) {
-        sendMessage();
-      }
-    }
-
-    onMounted(() => {
-      menuItems.value = [
-        { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
-        {
-          icon: 'fas fa-cog', text: 'Settings', onClickMethod: () => {
-            showSettings.value = true
-          }
-        },
-        { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
-      ],
-        window.addEventListener('keydown', handleKeyDown);
-
-      // Clean up the event listener on unmount
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      }
-    });
-
-    const newChat = () => {
-      chats.value.unshift({ title: "Untitled", messages: [] });
-      currentChatIndex.value = 0;
-    };
-
-
-    const selectChat = (index) => {
-      currentChatIndex.value = index;
-    };
-
-    const markdownToHtml = (markdownText) => {
-      // TODO 使用库将 Markdown 转换为 HTML
-      return markdownText;
-    };
-
-
-    // 使用 window.wails.Events.On 监听事件 (需要根据实际情况调整)
-    EventsOn("addMessage", (message) => {
-      // 找到当前聊天的 messages 数组，并将新消息添加进去
-      currentChat.value.messages.push({ text: message, isUser: false });
-    });
-    EventsOn("appendMessage", (message) => {
-      const lastMessage = currentChat.value.messages[currentChat.value.messages.length - 1];
-      if (lastMessage) {
-        lastMessage.text += message;
-        scrollToBottom();
-      }
-    });
-
-
-    return {
-      chats,
-      currentChatIndex,
-      currentChat,
-      userInput,
-      messageContainer,
-      sendMessage,
-      menuItems,
-      newChat,
-      selectChat,
-      markdownToHtml,
-      showSettings,
-      showSettingsList,
-      settings,
-      submittedSettings,
-      currentSettingName,
-      submitSettings,
-      toggleSettingsList,
-      selectSetting,
-      deleteSetting
-    };
+const toggleSettingsList = () => {
+  if (submittedSettings.value.length > 0) {
+    showSettingsList.value = !showSettingsList.value;
+  } else {
+    showSettings.value = true;
   }
 };
+
+const selectSetting = (name) => {
+  currentSettingName.value = name;
+  showSettingsList.value = false;
+};
+
+const deleteSetting = (index) => {
+  submittedSettings.value.splice(index, 1);
+  if (submittedSettings.value.length === 0) {
+    currentSettingName.value = 'gpt-4.0';
+  } else if (currentSettingName.value === submittedSettings.value[index]?.name) {
+    currentSettingName.value = submittedSettings.value[0].name;
+  }
+};
+
+const currentChat = computed(() => chats.value[currentChatIndex.value]);
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
+    }
+  });
+};
+
+const sendMessage = () => {
+  if (userInput.value.trim() !== '') {
+    currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
+    Greet(JSON.stringify(currentChat.value.messages))
+      .then(response => {
+        currentChat.value.messages.push({ text: response, isUser: false });
+        scrollToBottom();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    userInput.value = '';
+  }
+};
+
+const handleKeyDown = (event) => {
+  if ((event.key === 'Enter' && event.ctrlKey && !navigator.platform.toUpperCase().includes('MAC')) ||
+    (event.key === 'Enter' && event.metaKey && navigator.platform.toUpperCase().includes('MAC'))) {
+    sendMessage();
+  }
+};
+
+onMounted(() => {
+  menuItems.value = [
+    { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
+    {
+      icon: 'fas fa-cog', text: 'Settings', onClickMethod: () => {
+        showSettings.value = true;
+      }
+    },
+    { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
+  ];
+  window.addEventListener('keydown', handleKeyDown);
+
+  // Clean up the event listener on unmount
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+  };
+});
+
+const newChat = () => {
+  chats.value.unshift({ title: "Untitled", messages: [] });
+  currentChatIndex.value = 0;
+};
+
+const selectChat = (index) => {
+  currentChatIndex.value = index;
+};
+
+const markdownToHtml = (markdownText) => {
+  // TODO 使用库将 Markdown 转换为 HTML
+  return markdownText;
+};
+
+// 使用 window.wails.Events.On 监听事件 (需要根据实际情况调整)
+EventsOn("addMessage", (message) => {
+  currentChat.value.messages.push({ text: message, isUser: false });
+});
+
+EventsOn("appendMessage", (message) => {
+  const lastMessage = currentChat.value.messages[currentChat.value.messages.length - 1];
+  if (lastMessage) {
+    lastMessage.text += message;
+    scrollToBottom();
+  }
+});
 </script>
 
 <template>
