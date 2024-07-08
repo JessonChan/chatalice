@@ -153,8 +153,10 @@ ChatAlice 采用 [MIT 许可证](./LICENSE)。
 - [Go](https://golang.org/)
 - [Vue.js](https://vuejs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
+- [GORM](https://github.com/go-gorm/gorm)
 
-还有更多项目无法一一感谢，感谢开源:  👨‍💻 👩‍💻 🐧 Open Source is changing the world.
+还有更多项目无法一一感谢，感谢开源:  👨‍💻 👩‍💻 🐧 Open Source is changing the world!
+
 ---
 
 <div align="center">
