@@ -9,6 +9,7 @@ const userInput = ref('');
 const messageContainer = ref(null);
 const menuItems = ref([]);
 const showSettings = ref(false);
+const showAbout = ref(false);
 const showSettingsList = ref(false);
 const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
@@ -114,7 +115,11 @@ onMounted(() => {
         showSettings.value = true;
       }
     },
-    { icon: 'fas fa-info-circle', text: 'About', onClickMethod: newChat },
+    {
+      icon: 'fas fa-info-circle', text: 'About', onClickMethod: () => {
+        showAbout.value = true;
+      }
+    },
   ];
   refreshModelList();
   getChats();
@@ -292,6 +297,37 @@ EventsOn("appendMessage", (data) => {
         <button @click="showSettings = false"
           class="mt-4 w-full bg-gray-300 text-gray-800 rounded-md py-2 hover:bg-gray-400">Close</button>
       </div>
+    </div>
+
+    <!-- About Model-->
+    <div v-if="showAbout"
+      class="fixed inset-0 mx-auto p-8 w-96 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg shadow-lg">
+      <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">欢迎来到ChatAlice的奇幻世界！🐰🍄</h1>
+
+      <p class="text-lg text-gray-600 mb-3">
+        ChatAlice 是一位充满好奇心的AI聊天伙伴，如同闯入科技奇境的现代爱丽丝。每次对话都是一场穿越想象力边界的冒险！
+      </p>
+
+      <p class="text-lg text-gray-600 mb-3">
+        深奥的技术话题，天马行空的想象，Alice都会以温暖而智慧的方式陪伴左右。跟随我们的白兔，跳入这个充满惊喜的数字兔子洞吧？
+      </p>
+
+      <p class="text-lg text-gray-600 mb-6">
+        有趣的是，在计算机世界里，Alice常常和她的好朋友Bob一起出现在各种思想实验中。而在我们的项目里，Alice决定独自前行，成为你的专属对话伙伴！
+      </p>
+
+      <div class="text-center">
+        <a href="https://github.com/JessonChan/chatalice"
+          class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+          在GitHub上探索我们的仙境
+        </a>
+      </div>
+
+      <p class="text-sm text-gray-500 mt-6 text-center italic">
+        "在这里，我们都有点疯狂。你疯狂，我疯狂。但我会告诉你一个秘密，最棒的人都是疯狂的。" - 柴郡猫（可能是程序员）
+      </p>
+      <button @click="showAbout = false"
+        class="mt-4 w-full bg-gray-300 text-gray-800 rounded-md py-2 hover:bg-gray-400">Close</button>
     </div>
   </div>
 </template>
