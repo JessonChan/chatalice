@@ -160,7 +160,7 @@ ChatAlice 采用 [MIT 许可证](./LICENSE)。
 ---
 
 <div align="center">
-  用 ❤️ 制作 | Copyright © 2023-present ChatAlice Team
+  用 ❤️ 制作 | Copyright © 2024-present ChatAlice Team
 
   如果您喜欢 ChatAlice 项目，请给我们一个星标 ⭐ 支持我们！
 </div>
