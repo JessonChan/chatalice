@@ -1,7 +1,13 @@
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
-import { Greet, Call } from '../wailsjs/go/main/App';
+import { Call } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
+
+import { Marked } from 'marked';
+import { markedHighlight } from "marked-highlight"
+import hljs from 'highlight.js'
+//引入markdown样式
+import 'highlight.js/styles/atom-one-dark.css'
 
 const chats = ref([]);
 const currentChatIndex = ref(0);
@@ -142,9 +148,19 @@ const selectChat = (index) => {
   currentSettingName.value = submittedSettings.value.find(item => item.id === currentModelId.value)?.name
 };
 
+const marked = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'shell'
+      return hljs.highlight(code, { language }).value
+    }
+  })
+)
+
 const markdownToHtml = (markdownText) => {
   // TODO 使用库将 Markdown 转换为 HTML
-  return markdownText;
+  return marked.parse(markdownText);
 };
 
 // 使用 window.wails.Events.On 监听事件 (需要根据实际情况调整)
