@@ -301,7 +301,7 @@ EventsOn("appendMessage", (data) => {
 
     <!-- About Model-->
     <div v-if="showAbout"
-      class="fixed inset-0 mx-auto p-8 w-96 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg shadow-lg">
+      class="fixed inset-0 mx-auto p-8 w-1/2 h-fit bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg shadow-lg">
       <h1 class="text-3xl font-bold text-center text-blue-600 mb-6">欢迎来到ChatAlice的奇幻世界！🐰🍄</h1>
 
       <p class="text-lg text-gray-600 mb-3">
