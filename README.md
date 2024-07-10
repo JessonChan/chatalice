@@ -60,10 +60,9 @@ ChatAlice 提供了丰富的功能，满足您与 AI 模型交互的各种需求
 
 ### 前置需求
 
-- Go 1.21+
-- Node.js 14+
-- npm 或 yarn
 - Wails CLI
+   - Go 1.20+
+   - NPM (Node 15+)
 
 ### 构建步骤
 
@@ -73,18 +72,12 @@ ChatAlice 提供了丰富的功能，满足您与 AI 模型交互的各种需求
    cd chatalice
    ```
 
-2. 安装依赖
-   ```bash
-   go mod tidy
-   cd frontend && npm install
-   ```
-
-3. 开发模式运行
+2. 开发模式运行
    ```bash
    wails dev
    ```
 
-4. 构建应用
+3. 构建应用
    ```bash
    wails build
    ```
