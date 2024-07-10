@@ -42,7 +42,7 @@ func Title(model store.Model, userInput string) (title string) {
 	return
 }
 
-func Stream(model store.Model, msgHistory []store.Message, userInput string, callback func(string)) {
+func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, userInput string, callback func(string)) {
 	clietConfig := openai.DefaultConfig(model.Key)
 	clietConfig.BaseURL = model.BaseURL
 	c := openai.NewClientWithConfig(clietConfig)
@@ -80,6 +80,9 @@ func Stream(model store.Model, msgHistory []store.Message, userInput string, cal
 		}
 	}
 	if len(messages) > 0 {
+		if len(messages) > chat.ConversationRounds*2 {
+			messages = messages[len(messages)-chat.ConversationRounds*2:]
+		}
 		if messages[len(messages)-1].Role != "assistant" {
 			messages = append(messages, openai.ChatCompletionMessage{
 				Role:    "assistant",
@@ -87,22 +90,31 @@ func Stream(model store.Model, msgHistory []store.Message, userInput string, cal
 			})
 		}
 	}
+	messages = append([]openai.ChatCompletionMessage{
+		{
+			Role:    "system",
+			Content: chat.SystemPrompt,
+		},
+	}, messages...)
+
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "user",
 		Content: userInput,
 	})
 	fmt.Println("Streaming...", msgHistory, messages)
-	stream(c, model.ModelName, messages, callback)
+	// TODO chat.MaxInputTokens setting here
+	stream(c, model.ModelName, chat.MaxOutputTokens, messages, callback)
 }
-func stream(c *openai.Client, model string, messages []openai.ChatCompletionMessage, callback func(string)) {
+func stream(c *openai.Client, model string, maxOutputTokens int, messages []openai.ChatCompletionMessage, callback func(string)) {
 	ctx := context.Background()
 	req := openai.ChatCompletionRequest{
 		// Model: "alibaba/Qwen2-7B-Instruct",
 		// Model: openai.GPT3Dot5Turbo,
 		// Model: "claude-3-5-sonnet-20240620",
-		Model:    model,
-		Messages: messages,
-		Stream:   true,
+		MaxTokens: maxOutputTokens,
+		Model:     model,
+		Messages:  messages,
+		Stream:    true,
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {

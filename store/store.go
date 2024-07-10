@@ -58,10 +58,33 @@ type Model struct {
 
 type Chat struct {
 	gorm.Model
-	Title        string `json:"title"`
-	ChatID       uint   `json:"chatId"`
-	ModelID      uint   `json:"modelId"`
-	SystemPrompt string `json:"systemPrompt"`
+	Title              string `json:"title"`
+	ChatID             uint   `json:"chatId"` // is a unique id,created by client
+	ModelID            uint   `json:"modelId"`
+	ConversationRounds int    `json:conversationRounds`
+	MaxInputTokens     int    `json:maxInputTokens`
+	MaxOutputTokens    int    `json:maxOutputTokens`
+	SystemPrompt       string `json:"systemPrompt"`
+}
+
+var DefaulChatConfig = Chat{
+	Title:              "Untitled",
+	ConversationRounds: 3,
+	MaxInputTokens:     4096,
+	MaxOutputTokens:    4096,
+	SystemPrompt:       "You are a helpful assistant.",
+}
+
+func NewChat(chatId, modelId uint) Chat {
+	return Chat{
+		Title:              "Untitled",
+		ChatID:             chatId,
+		ModelID:            modelId,
+		ConversationRounds: 3,
+		MaxInputTokens:     4096,
+		MaxOutputTokens:    4096,
+		SystemPrompt:       "You are a helpful assistant.",
+	}
 }
 
 type Message struct {
@@ -115,13 +138,18 @@ func GetChatByChatID(id uint) Chat {
 	return chat
 }
 
-func UpdateChatTitleByChatID(id uint, title string) {
+func SaveChatSetting(chat *Chat) {
 	db := getDb()
-	db.Model(&Chat{}).Where("chat_id = ?", id).Update("title", title)
+	db.Save(chat)
 }
-func UpdateChatModelIDByChatID(id, modelId uint) {
+
+func UpdateChatTitleByChatID(chatId uint, title string) {
 	db := getDb()
-	db.Model(&Chat{}).Where("chat_id = ?", id).Update("model_id", modelId)
+	db.Model(&Chat{}).Where("chat_id = ?", chatId).Update("title", title)
+}
+func UpdateChatModelIDByChatID(chatId, modelId uint) {
+	db := getDb()
+	db.Model(&Chat{}).Where("chat_id = ?", chatId).Update("model_id", modelId)
 }
 
 func InsertChat(chat *Chat) uint {

@@ -66,14 +66,39 @@ func (a *App) call(fn string, args string) any {
 				})
 			}
 			resp = append(resp, map[string]any{
-				"id":       chat.ChatID,
-				"title":    chat.Title,
-				"messages": messageResp,
-				"modelId":  chat.ModelID,
+				"id":                 chat.ChatID,
+				"title":              chat.Title,
+				"messages":           messageResp,
+				"modelId":            chat.ModelID,
+				"conversationRounds": chat.ConversationRounds,
+				"maxInputTokens":     chat.MaxInputTokens,
+				"maxOutputTokens":    chat.MaxOutputTokens,
+				"systemPrompt":       chat.SystemPrompt,
 			})
 		}
 		return resp
-	case "hello":
+	case "updateChatSetting":
+		// TODO why this is so hard and confusing to understand
+		setting := struct {
+			ChatId             uint   `json:"chatId"`
+			ModelId            uint   `json:"modelId"`
+			ConversationRounds int    `json:"conversationRounds"`
+			MaxInputTokens     int    `json:"maxInputTokens"`
+			MaxOutputTokens    int    `json:"maxOutputTokens"`
+			SystemPrompt       string `json:"systemPrompt"`
+		}{}
+		json.Unmarshal([]byte(args), &setting)
+		chat := store.GetChatByChatID(setting.ChatId)
+		if chat.ID == 0 {
+			chat = store.NewChat(setting.ChatId, setting.ModelId)
+		}
+		chat.ConversationRounds = setting.ConversationRounds
+		chat.MaxInputTokens = setting.MaxInputTokens
+		chat.MaxOutputTokens = setting.MaxOutputTokens
+		chat.ModelID = setting.ModelId
+		chat.SystemPrompt = setting.SystemPrompt
+		store.SaveChatSetting(&chat)
+	case "sendMessage":
 		msg := store.Message{}
 		json.Unmarshal([]byte(args), &msg)
 		messages := store.GetMessageList(msg.ChatID)
@@ -81,11 +106,7 @@ func (a *App) call(fn string, args string) any {
 		chat := store.GetChatByChatID(msg.ChatID)
 		if chat.ID == 0 {
 			// 新建一个Chat
-			chat = store.Chat{
-				Title:   "Untitled",
-				ChatID:  msg.ChatID,
-				ModelID: msg.ModelID,
-			}
+			chat = store.NewChat(msg.ChatID, msg.ModelID)
 			store.InsertChat(&chat)
 		}
 		if chat.Title == "Untitled" {
@@ -109,7 +130,7 @@ func (a *App) call(fn string, args string) any {
 			Role:    "assistant",
 			Content: "",
 		})
-		go llm.Stream(model, messages, msg.Content, func(chuckText string) {
+		go llm.Stream(model, chat, messages, msg.Content, func(chuckText string) {
 			fmt.Println("callback", answerID)
 			bs, _ := json.Marshal(map[string]any{
 				"message_id": answerID,

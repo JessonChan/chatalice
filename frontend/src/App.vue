@@ -21,6 +21,12 @@ const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
 const currentSettingName = ref('Setting Models');
 const currentModelId = ref(0);
+const showChatSetting = ref(false);
+const selectedModel = ref(null);
+const conversationRounds = ref(3);
+const maxInputTokens = ref(4096);
+const maxOutputTokens = ref(4096);
+const systemPrompt = ref('You are a helpful assistant.');
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
@@ -29,10 +35,43 @@ const submitSettings = () => {
   settings.value = { name: '', key: '', baseUrl: '', model: '' };
 };
 
+const submitChatSettings = () => {
+  chats.value[currentChatIndex.value] = {
+    title: currentChat.value.title,
+    messages: currentChat.value.messages,
+    id: currentChat.value.id,
+    modelId: selectedModel.value.id,
+    conversationRounds: conversationRounds.value,
+    maxInputTokens: maxInputTokens.value,
+    maxOutputTokens: maxOutputTokens.value,
+    systemPrompt: systemPrompt.value,
+  }
+  Call("updateChatSetting", JSON.stringify(
+    {
+      ...currentChat.value,
+      ...{ chatId: currentChat.value.id }
+    }
+  ));
+
+  showChatSetting.value = false;
+  selectedModel.value = null;
+  conversationRounds.value = 3
+  maxInputTokens.value = 4096
+  maxOutputTokens.value = 4096
+  systemPrompt.value = 'You are a helpful assistant.'
+};
+
 const toggleSettingsList = () => {
   if (submittedSettings.value.length > 0) {
-    showSettingsList.value = !showSettingsList.value;
+    // showSettingsList.value = true;
+    showChatSetting.value = true;
+    selectedModel.value = submittedSettings.value.find(item => item.id === currentModelId.value) ?? submittedSettings.value[0]
+    conversationRounds.value = currentChat.conversationRounds ?? 3
+    maxInputTokens.value = currentChat.value.maxInputTokens ?? 4096
+    maxOutputTokens.value = currentChat.value.maxOutputTokens ?? 4096
+    systemPrompt.value = currentChat.value.systemPrompt ?? 'You are a helpful assistant.'
   } else {
+    // 先增加一个新的模型
     showSettings.value = true;
   }
 };
@@ -66,7 +105,7 @@ const scrollToBottom = () => {
 const sendMessage = () => {
   if (userInput.value.trim() !== '') {
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
-    Call("hello", JSON.stringify({
+    Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
       ChatID: chats.value[currentChatIndex.value].id,
       ModelID: currentModelId.value,
@@ -103,13 +142,14 @@ const refreshModelList = () => {
 const getChats = () => {
   Call("getChats", "").then(data => {
     let response = JSON.parse(data);
-    chats.value = response.map(item => ({ title: item.title, messages: item.messages, id: item.id, modelId: item.modelId }));
+    console.log(response);
+    chats.value = response.map(item => ({ ...item }));
     if (chats.value.length == 0) {
       chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime(), modelId: submittedSettings.value[0].id }];
     }
     currentChatIndex.value = 0
     currentModelId.value = chats.value[0].modelId
-    currentSettingName.value = submittedSettings.value[0].name
+    currentSettingName.value = submittedSettings.value.find(item => item.id === currentModelId.value)?.name
   })
 }
 
@@ -312,6 +352,37 @@ EventsOn("appendMessage", (data) => {
         </div>
         <button @click="showSettings = false"
           class="mt-4 w-full bg-gray-300 text-gray-800 rounded-md py-2 hover:bg-gray-400">Close</button>
+      </div>
+    </div>
+    <!--Chat Setting -->
+    <div v-if="showChatSetting" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-6 rounded-lg w-96">
+        <h2 class="text-lg font-bold mb-4">Settings</h2>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">Model</label>
+          <select v-model="selectedModel" class="w-full p-2 border border-gray-300 rounded">
+            <option v-for="model in submittedSettings" :key="model.id" :value="model">{{ model.name }}</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">Rounds</label>
+          <input v-model="conversationRounds" type="number" class="w-full p-2 border border-gray-300 rounded">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">Input Tokens</label>
+          <input v-model="maxInputTokens" type="number" class="w-full p-2 border border-gray-300 rounded">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">Output Tokens</label>
+          <input v-model="maxOutputTokens" type="number" class="w-full p-2 border border-gray-300 rounded">
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">System Prompt</label>
+          <textarea v-model="systemPrompt" class="w-full p-2 border border-gray-300 rounded"></textarea>
+        </div>
+        <button @click="submitChatSettings" class="px-4 py-2 bg-blue-500 text-white rounded">Submit</button>
+        <button @click="() => { showChatSetting = false }"
+          class="px-4 py-2 bg-blue-500 text-white rounded">Close</button>
       </div>
     </div>
 
