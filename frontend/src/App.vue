@@ -19,7 +19,6 @@ const showAbout = ref(false);
 const showSettingsList = ref(false);
 const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
-const currentModelId = ref(0);
 const showChatSetting = ref(false);
 const selectedModel = ref(null);
 const conversationRounds = ref(3);
@@ -85,6 +84,9 @@ const currentChat = computed(() => chats.value[currentChatIndex.value]);
 const currentChatModelName = computed(() => {
   const setting = submittedSettings.value?.find(item => item.id == currentChat.value?.modelId);
   return setting ? setting.name : '';
+});
+const currentModelId = computed(() => {
+  return currentChat.value?.modelId ?? submittedSettings.value[0]?.id;
 });
 
 const scrollToBottom = () => {
