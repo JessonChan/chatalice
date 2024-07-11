@@ -19,7 +19,6 @@ const showAbout = ref(false);
 const showSettingsList = ref(false);
 const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
-const currentSettingName = ref('Setting Models');
 const currentModelId = ref(0);
 const showChatSetting = ref(false);
 const selectedModel = ref(null);
@@ -30,7 +29,6 @@ const systemPrompt = ref('You are a helpful assistant.');
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
-  currentSettingName.value = settings.value.name;
   Call("insertModel", JSON.stringify(settings.value));
   settings.value = { name: '', key: '', baseUrl: '', model: '' };
 };
@@ -49,7 +47,9 @@ const submitChatSettings = () => {
   Call("updateChatSetting", JSON.stringify(
     {
       ...currentChat.value,
-      ...{ chatId: currentChat.value.id }
+      ...{
+        chatId: currentChat.value.id, messages: []
+      }
     }
   ));
 
@@ -76,23 +76,16 @@ const toggleSettingsList = () => {
   }
 };
 
-const selectSetting = (name, id) => {
-  console.log(name, id)
-  currentSettingName.value = name
-  currentModelId.value = id
-  showSettingsList.value = false;
-};
 
 const deleteSetting = (index) => {
   submittedSettings.value.splice(index, 1);
-  if (submittedSettings.value.length === 0) {
-    currentSettingName.value = 'gpt-4.0';
-  } else if (currentSettingName.value === submittedSettings.value[index]?.name) {
-    currentSettingName.value = submittedSettings.value[0].name;
-  }
-};
+}
 
 const currentChat = computed(() => chats.value[currentChatIndex.value]);
+const currentChatModelName = computed(() => {
+  const setting = submittedSettings.value?.find(item => item.id == currentChat.value?.modelId);
+  return setting ? setting.name : '';
+});
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -132,8 +125,6 @@ const refreshModelList = () => {
     let modelList = JSON.parse(response);
     if (modelList.length > 0) {
       submittedSettings.value = modelList.map(item => ({ name: item.name, key: item.key, baseUrl: item.baseUrl, model: item.model, id: item.ID }));
-      currentSettingName.value = modelList[0].name;
-      currentModelId.value = modelList[0].ID;
     }
     console.log(modelList, submittedSettings.value)
   })
@@ -148,8 +139,6 @@ const getChats = () => {
       chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime(), modelId: submittedSettings.value[0].id }];
     }
     currentChatIndex.value = 0
-    currentModelId.value = chats.value[0].modelId
-    currentSettingName.value = submittedSettings.value.find(item => item.id === currentModelId.value)?.name
   })
 }
 
@@ -178,14 +167,25 @@ onMounted(() => {
 });
 
 const newChat = () => {
-  chats.value.unshift({ title: "Untitled", messages: [], id: new Date().getTime() });
+  let newChatItem = {
+    ...currentChat.value,
+    ...{
+      title: "Untitled",
+      messages: [],
+      id: new Date().getTime(),
+      conversationRounds: 3,
+      maxInputTokens: 4096,
+      maxOutputTokens: 4096,
+      systemPrompt: 'You are a helpful assistant.'
+    }
+  }
+  chats.value.unshift(newChatItem);
   currentChatIndex.value = 0;
 };
 
 const selectChat = (index) => {
   currentChatIndex.value = index;
-  currentModelId.value = chats.value[currentChatIndex.value].modelId || currentModelId.value
-  currentSettingName.value = submittedSettings.value.find(item => item.id === currentModelId.value)?.name
+
 };
 
 const marked = new Marked(
@@ -264,14 +264,8 @@ EventsOn("appendMessage", (data) => {
           <span class="text-lg font-medium">{{ currentChat?.title }}</span>
           <div class="relative pl-2">
             <span @click="toggleSettingsList"
-              class="bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm cursor-pointer">{{ currentSettingName
+              class="bg-orange-200 text-orange-800 px-2 py-1 rounded text-sm cursor-pointer">{{ currentChatModelName
               }}</span>
-            <div v-if="showSettingsList" class="absolute top-full left-0 mt-1 bg-white border rounded shadow-lg z-10">
-              <div v-for="setting in submittedSettings" :key="setting.name"
-                @click="selectSetting(setting.name, setting.id)" class="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                {{ setting.name }}
-              </div>
-            </div>
           </div>
         </div>
 
