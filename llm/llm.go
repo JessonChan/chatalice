@@ -79,7 +79,7 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 			preRole = msg.Role
 		}
 	}
-	if len(messages) > chat.ConversationRounds*2 {
+	if len(messages) >= chat.ConversationRounds*2 {
 		messages = messages[len(messages)-chat.ConversationRounds*2:]
 	}
 	if len(messages) > 0 {
