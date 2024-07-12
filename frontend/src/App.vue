@@ -187,7 +187,7 @@ const newChat = () => {
 
 const selectChat = (index) => {
   currentChatIndex.value = index;
-
+  scrollToBottom();
 };
 
 const marked = new Marked(
