@@ -61,9 +61,9 @@ type Chat struct {
 	Title              string `json:"title"`
 	ChatID             uint   `json:"chatId"` // is a unique id,created by client
 	ModelID            uint   `json:"modelId"`
-	ConversationRounds int    `json:conversationRounds`
-	MaxInputTokens     int    `json:maxInputTokens`
-	MaxOutputTokens    int    `json:maxOutputTokens`
+	ConversationRounds int    `json:"conversationRounds"`
+	MaxInputTokens     int    `json:"maxInputTokens"`
+	MaxOutputTokens    int    `json:"maxOutputTokens"`
 	SystemPrompt       string `json:"systemPrompt"`
 }
 

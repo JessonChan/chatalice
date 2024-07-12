@@ -65,7 +65,7 @@ const toggleSettingsList = () => {
     // showSettingsList.value = true;
     showChatSetting.value = true;
     selectedModel.value = submittedSettings.value.find(item => item.id === currentModelId.value) ?? submittedSettings.value[0]
-    conversationRounds.value = currentChat.conversationRounds ?? 3
+    conversationRounds.value = currentChat.value.conversationRounds ?? 3
     maxInputTokens.value = currentChat.value.maxInputTokens ?? 4096
     maxOutputTokens.value = currentChat.value.maxOutputTokens ?? 4096
     systemPrompt.value = currentChat.value.systemPrompt ?? 'You are a helpful assistant.'
