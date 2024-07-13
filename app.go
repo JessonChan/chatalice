@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -50,7 +52,11 @@ func (a *App) call(fn string, args string) any {
 		fmt.Printf("insertModel: %v\n", m)
 		store.InsertModel(m)
 	case "getChats":
-		list := store.GetChatList()
+		fmt.Println("getChats", args)
+		lastSeen, _ := strconv.Atoi(args)
+		lastUpdateAt := time.Unix(int64(lastSeen), 0)
+		// list := store.GetChatList()
+		list := store.GetChatListByUpdatedAt(lastUpdateAt)
 		resp := []map[string]any{}
 		for _, chat := range list {
 			messages := store.GetMessageList(chat.ChatID)
@@ -74,6 +80,7 @@ func (a *App) call(fn string, args string) any {
 				"maxInputTokens":     chat.MaxInputTokens,
 				"maxOutputTokens":    chat.MaxOutputTokens,
 				"systemPrompt":       chat.SystemPrompt,
+				"updatedAt":          chat.UpdatedAt.Unix(),
 			})
 		}
 		return resp

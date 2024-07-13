@@ -133,16 +133,37 @@ const refreshModelList = () => {
 }
 
 const getChats = () => {
-  Call("getChats", "").then(data => {
+  let lastSeen = new Date().getTime() / 1000;
+  if (chats.value.length > 0) {
+    chats.value.forEach(item => {
+      console.log(item.updatedAt, new Date(item.updatedAt * 1000), item.updatedAt < lastSeen)
+      if (item.updatedAt < lastSeen) {
+        lastSeen = new Date(item.updatedAt * 1000).getTime() / 1000;
+      }
+    })
+  }
+  Call("getChats", `${Math.floor(lastSeen)}`).then(data => {
     let response = JSON.parse(data);
     console.log(response);
-    chats.value = response.map(item => ({ ...item }));
+    chats.value = [
+      ...chats.value,
+      ...response.map(item => ({ ...item }))
+    ]
     if (chats.value.length == 0) {
-      chats.value = [{ title: "Untitled", messages: [], id: new Date().getTime(), modelId: submittedSettings.value[0].id }];
+      newChat();
     }
-    currentChatIndex.value = 0
+    if (chatContainer.value && chatContainer.value.scrollHeight <= chatContainer.value.clientHeight && hasMore.value) {
+      //TODO 检查是不是充满滚动区域
+      // getChats()
+    }
   })
 }
+const handleChatsScroll = (event) => {
+  const { scrollTop, clientHeight, scrollHeight } = event.target;
+  if (scrollTop + clientHeight >= scrollHeight - 50) {
+    getChats()
+  }
+};
 
 onMounted(() => {
   menuItems.value = [
@@ -237,7 +258,7 @@ EventsOn("appendMessage", (data) => {
         <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6">
         <span class="text-xl font-semibold ps-2">ChatAlice</span>
       </div>
-      <div class="flex-col-1 overflow-y-auto h-[calc(2/3*100vh-64px)]">
+      <div ref="chatContainer" class="flex-col-1 overflow-y-auto h-[calc(2/3*100vh-64px)]" @scroll="handleChatsScroll">
         <div class="p-4">
           <ul>
             <li v-for="(chat, index) in chats" :key="index" class="mb-2">

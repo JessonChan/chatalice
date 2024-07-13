@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/glebarez/sqlite" // Pure go SQLite driver, checkout https://github.com/glebarez/sqlite for details
 	"gorm.io/gorm"
@@ -128,6 +129,13 @@ func GetChatList() []Chat {
 	db := getDb()
 	var chats []Chat
 	db.Order("id desc").Find(&chats)
+	return chats
+}
+
+func GetChatListByUpdatedAt(updateAt time.Time) []Chat {
+	db := getDb()
+	var chats []Chat
+	db.Order("updated_at desc").Where("updated_at <?", updateAt).Limit(20).Find(&chats)
 	return chats
 }
 
