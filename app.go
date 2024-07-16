@@ -138,6 +138,9 @@ func (a *App) call(fn string, args string) any {
 			Content: "",
 		})
 		go llm.Stream(model, chat, messages, msg.Content, func(chuckText string) {
+			if chuckText == "" {
+				return
+			}
 			fmt.Println("callback", answerID)
 			bs, _ := json.Marshal(map[string]any{
 				"message_id": answerID,
