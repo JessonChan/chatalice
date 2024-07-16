@@ -197,6 +197,12 @@ onMounted(() => {
     }, { passive: true });
   });
 
+  nextTick(() => {
+    if (messageContainer.value) {
+      messageContainer.value.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
   // Clean up the event listener on unmount
   return () => {
     window.removeEventListener('keydown', handleKeyDown);
@@ -222,6 +228,7 @@ const newChat = () => {
 
 const selectChat = (index) => {
   currentChatIndex.value = index;
+  shouldScroll.value = true;
   scrollToBottom();
 };
 
@@ -252,11 +259,10 @@ EventsOn("updateChatTitle", (data) => {
 
 
 EventsOn("appendMessage", (data) => {
-  console.log("appendMessage", data);
   let message = JSON.parse(data);
-  console.log("message", message, currentChat.value.messages);
+  // console.log("message", message, currentChat.value.messages);
   // loop currentChat.messages to find the id===message.message_id and upate the text+=text
-  const msg = currentChat.value.messages.find(({ id }) => id === message.message_id);
+  const msg = [...currentChat.value.messages].find((m) => m.id === message.message_id);
   if (msg) {
     msg.text += message.text;
     scrollToBottom();
