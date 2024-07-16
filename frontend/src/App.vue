@@ -13,6 +13,7 @@ const chats = ref([]);
 const currentChatIndex = ref(0);
 const userInput = ref('');
 const messageContainer = ref(null);
+const chatContainer = ref(null);
 const menuItems = ref([]);
 const showSettings = ref(false);
 const showAbout = ref(false);
@@ -25,6 +26,7 @@ const conversationRounds = ref(3);
 const maxInputTokens = ref(4096);
 const maxOutputTokens = ref(4096);
 const systemPrompt = ref('You are a helpful assistant.');
+const shouldScroll = ref(true);
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
@@ -91,14 +93,19 @@ const currentModelId = computed(() => {
 
 const scrollToBottom = () => {
   nextTick(() => {
-    if (messageContainer.value) {
+    console.log("scroll to bottom", shouldScroll.value)
+    if (messageContainer.value && shouldScroll.value) {
       messageContainer.value.scrollTop = messageContainer.value.scrollHeight;
     }
   });
 };
-
+const stopScrolling = () => {
+  shouldScroll.value = false;
+};
 const sendMessage = () => {
   if (userInput.value.trim() !== '') {
+    shouldScroll.value = true;
+    console.log("send message", userInput.value, shouldScroll.value)
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
     Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
@@ -152,7 +159,7 @@ const getChats = () => {
     if (chats.value.length == 0) {
       newChat();
     }
-    if (chatContainer.value && chatContainer.value.scrollHeight <= chatContainer.value.clientHeight && hasMore.value) {
+    if (chatContainer.value && chatContainer.value.scrollHeight <= chatContainer.value.clientHeight) {
       //TODO 检查是不是充满滚动区域
       // getChats()
     }
@@ -182,6 +189,13 @@ onMounted(() => {
   refreshModelList();
   getChats();
   window.addEventListener('keydown', handleKeyDown);
+
+  // 监听鼠标事件，停止滚动
+  ['wheel'].forEach(eventName => {
+    document.addEventListener(eventName, () => {
+      stopScrolling();
+    }, { passive: true });
+  });
 
   // Clean up the event listener on unmount
   return () => {
