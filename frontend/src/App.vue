@@ -278,7 +278,8 @@ EventsOn("appendMessage", (data) => {
         <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6">
         <span class="text-xl font-semibold ps-2">ChatAlice</span>
       </div>
-      <div ref="chatContainer" class="flex-col-1 overflow-y-auto h-[calc(2/3*100vh-64px)]" @scroll="handleChatsScroll">
+      <div ref="chatContainer" class="flex-col-1 w-64 overflow-y-auto h-[calc(2/3*100vh-64px)]"
+        @scroll="handleChatsScroll">
         <div class="p-4">
           <ul>
             <li v-for="(chat, index) in chats" :key="index" class="mb-2">
