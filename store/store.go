@@ -27,8 +27,18 @@ func getDb(initDb ...bool) *gorm.DB {
 		// TODO 更好的错误处理
 		panic(err)
 	}
+	// 附加程序特定的目录路径
+	appName := "ChatAlice"
+	appConfigDir := filepath.Join(configPath, appName)
+
+	// 创建目录
+	err = os.MkdirAll(appConfigDir, 0755)
+	if err != nil {
+		fmt.Println("无法创建程序配置目录:", err)
+		panic(err)
+	}
 	// TODO dbFilePath := filepath.Join(filepath.Join(configPath, "ChatAlice"), "chat.db")
-	dbFilePath := filepath.Join(configPath, "chat.db")
+	dbFilePath := filepath.Join(appConfigDir, "chat.db")
 	fmt.Println("db file path:", dbFilePath)
 	db, err := gorm.Open(sqlite.Open(dbFilePath), &gorm.Config{
 		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags),
