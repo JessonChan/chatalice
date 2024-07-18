@@ -115,6 +115,8 @@ func (a *App) call(fn string, args string) any {
 			// 新建一个Chat
 			chat = store.NewChat(msg.ChatID, msg.ModelID)
 			store.InsertChat(&chat)
+		} else {
+			store.UpdateChatLatestTime(msg.ChatID)
 		}
 		if chat.Title == "Untitled" {
 			go func() {

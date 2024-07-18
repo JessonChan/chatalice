@@ -160,6 +160,11 @@ func UpdateChatModelIDByChatID(chatId, modelId uint) {
 	db.Model(&Chat{}).Where("chat_id = ?", chatId).Update("model_id", modelId)
 }
 
+func UpdateChatLatestTime(chatId uint) {
+	db := getDb()
+	db.Model(&Chat{}).Where("chat_id = ?", chatId).Updates(map[string]interface{}{})
+}
+
 func InsertChat(chat *Chat) uint {
 	db := getDb()
 	db.Create(chat)
