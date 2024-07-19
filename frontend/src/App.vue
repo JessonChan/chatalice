@@ -119,6 +119,11 @@ const sendMessage = () => {
       console.error('Error:', error);
     });
     userInput.value = '';
+    // 将当前的聊天上升到第一个
+    if (currentChatIndex.value > 0) {
+      chats.value.unshift(chats.value.splice(currentChatIndex.value, 1)[0]);
+      currentChatIndex.value = 0;
+    }
   }
 };
 
@@ -286,7 +291,7 @@ EventsOn("appendMessage", (data) => {
               <div
                 :class="['flex items-center p-2 cursor-pointer rounded', currentChatIndex === index ? 'bg-gray-200' : '']"
                 @click="selectChat(index)">
-                <i class="fas fa-file-alt mr-2"></i>
+                <!-- <i class="fas fa-file-alt mr-2"></i> -->
                 <span>{{ chat.title }}</span>
               </div>
             </li>

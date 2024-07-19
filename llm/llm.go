@@ -22,8 +22,9 @@ func Title(model store.Model, userInput string) (title string) {
 	c := openai.NewClientWithConfig(clietConfig)
 	messages := []openai.ChatCompletionMessage{
 		{
-			Role:    "system",
-			Content: "你是一个非常善于起标题的机器，可以根据用户的一个输入,想到可能的输出，生成一个不超过16个字的标题,你的回复务必只需要给定这个标题本身，不需要其它任何的多余信息或符号",
+			Role: "system",
+			// TODO 标题应该也允许用户自己设定和选择
+			Content: "你是一个非常善于起标题的机器人，可以根据用户的一个输入,想到可能的输出，生成一个不超过16个字的标题，并且标题由一个emoji和空格开始，如：❤️ 这是一个标题格式。你的回复务必只需要给定这个标题本身，不需要其它任何的多余信息或符号",
 		},
 		{
 			Role:    "user",
