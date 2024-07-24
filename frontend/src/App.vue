@@ -106,6 +106,8 @@ const sendMessage = () => {
   if (userInput.value.trim() !== '') {
     shouldScroll.value = true;
     console.log("send message", userInput.value, shouldScroll.value)
+    // TODO 自动滚动时分页加载消息
+    currentChat.value.messages = currentChat.value.messages.slice(-8)
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
     Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
@@ -201,12 +203,9 @@ onMounted(() => {
       stopScrolling();
     }, { passive: true });
   });
-
-  nextTick(() => {
-    if (messageContainer.value) {
-      messageContainer.value.scrollIntoView({ behavior: 'smooth' });
-    }
-  });
+  setTimeout(() => {
+    selectChat(0);
+  }, 100);
 
   // Clean up the event listener on unmount
   return () => {
