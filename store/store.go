@@ -12,13 +12,9 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func InitDb() {
-	getDb(true)
-}
-
 var sqlDB *gorm.DB
 
-func getDb(initDb ...bool) *gorm.DB {
+func getDb() *gorm.DB {
 	if sqlDB != nil {
 		return sqlDB
 	}
@@ -40,6 +36,8 @@ func getDb(initDb ...bool) *gorm.DB {
 	// TODO dbFilePath := filepath.Join(filepath.Join(configPath, "ChatAlice"), "chat.db")
 	dbFilePath := filepath.Join(appConfigDir, "chat.db")
 	fmt.Println("db file path:", dbFilePath)
+	fi, err := os.Stat(dbFilePath)
+	dbInit := err != nil || fi == nil || fi.Size() == 0
 	db, err := gorm.Open(sqlite.Open(dbFilePath), &gorm.Config{
 		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags),
 			logger.Config{
@@ -50,7 +48,7 @@ func getDb(initDb ...bool) *gorm.DB {
 		panic("failed to connect database")
 	}
 	// Migrate the schema
-	if len(initDb) > 0 && initDb[0] {
+	if dbInit {
 		db.AutoMigrate(&Model{})
 		db.AutoMigrate(&Chat{})
 		db.AutoMigrate(&Message{})
