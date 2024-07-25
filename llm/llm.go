@@ -32,8 +32,9 @@ func Title(model store.Model, userInput string) (title string) {
 		},
 	}
 	resp, err := c.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
-		Model:    model.ModelName,
-		Messages: messages,
+		Model:     model.ModelName,
+		Messages:  messages,
+		MaxTokens: 16,
 	})
 	if err != nil {
 		fmt.Printf("ChatCompletion error: %v\n", err)
