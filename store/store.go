@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func init() {
+func InitDb() {
 	getDb(true)
 }
 

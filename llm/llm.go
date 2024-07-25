@@ -44,7 +44,42 @@ func Title(model store.Model, userInput string) (title string) {
 	return
 }
 
-func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, userInput string, callback func(string)) {
+type UserInput struct {
+	Content string
+	Images  []string
+	Files   []string
+}
+
+func (userInput UserInput) toLLMMessage() openai.ChatCompletionMessage {
+	if len(userInput.Images) > 0 {
+		message := openai.ChatCompletionMessage{
+			Role:         "user",
+			MultiContent: []openai.ChatMessagePart{},
+		}
+		if userInput.Content != "" {
+			message.MultiContent = append(message.MultiContent, openai.ChatMessagePart{
+				Text: userInput.Content,
+				Type: "text",
+			})
+		}
+		for _, image := range userInput.Images {
+			message.MultiContent = append(message.MultiContent, openai.ChatMessagePart{
+				ImageURL: &openai.ChatMessageImageURL{
+					URL:    image,
+					Detail: openai.ImageURLDetailAuto,
+				},
+				Type: "image_url",
+			})
+		}
+		return message
+	}
+	return openai.ChatCompletionMessage{
+		Role:    "user",
+		Content: userInput.Content,
+	}
+}
+
+func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, userInput UserInput, callback func(string)) {
 	clietConfig := openai.DefaultConfig(model.Key)
 	clietConfig.BaseURL = model.BaseURL
 	c := openai.NewClientWithConfig(clietConfig)
@@ -99,10 +134,7 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 		},
 	}, messages...)
 
-	messages = append(messages, openai.ChatCompletionMessage{
-		Role:    "user",
-		Content: userInput,
-	})
+	messages = append(messages, userInput.toLLMMessage())
 	fmt.Println("Streaming...", msgHistory, messages)
 	// TODO chat.MaxInputTokens setting here
 	stream(c, model.ModelName, chat.MaxOutputTokens, messages, callback)
