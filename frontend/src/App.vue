@@ -113,7 +113,7 @@ const sendMessage = () => {
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
     Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
-      Images: uploadedImages.value.join(","),
+      Images: uploadedImages.value.join("&"),
       ChatID: chats.value[currentChatIndex.value].id,
       ModelID: currentModelId.value,
     })).then(response => {
@@ -124,6 +124,7 @@ const sendMessage = () => {
       console.error('Error:', error);
     });
     userInput.value = '';
+    uploadedImages.value = [];
     // 将当前的聊天上升到第一个
     if (currentChatIndex.value > 0) {
       chats.value.unshift(chats.value.splice(currentChatIndex.value, 1)[0]);

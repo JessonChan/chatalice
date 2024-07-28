@@ -52,6 +52,7 @@ type UserInput struct {
 }
 
 func (userInput UserInput) toLLMMessage() openai.ChatCompletionMessage {
+	fmt.Println("userInput.Content:", userInput.Content, userInput.Images, len(userInput.Images))
 	if len(userInput.Images) > 0 {
 		message := openai.ChatCompletionMessage{
 			Role:         "user",

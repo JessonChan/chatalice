@@ -141,7 +141,11 @@ func (a *App) call(fn string, args string) any {
 			Role:    "assistant",
 			Content: "",
 		})
-		go llm.Stream(model, chat, messages, llm.UserInput{Content: msg.Content, Images: strings.Split(msg.Images, ",")}, func(chuckText string) {
+		images := []string{}
+		if len(msg.Images) > 0 {
+			images = strings.Split(msg.Images, "&")
+		}
+		go llm.Stream(model, chat, messages, llm.UserInput{Content: msg.Content, Images: images}, func(chuckText string) {
 			if chuckText == "" {
 				return
 			}
