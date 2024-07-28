@@ -198,7 +198,7 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 
   // 监听鼠标事件，停止滚动
-  ['wheel'].forEach(eventName => {
+  ['wheel', 'click'].forEach(eventName => {
     document.addEventListener(eventName, () => {
       stopScrolling();
     }, { passive: true });
@@ -206,6 +206,22 @@ onMounted(() => {
   setTimeout(() => {
     selectChat(0);
   }, 100);
+
+  // Open all links externally
+  // This issue https://github.com/wailsapp/wails/issues/2691
+  document.body.addEventListener('click', function (e) {
+    if (e.target && e.target.nodeName == 'A' && e.target.href) {
+      const url = e.target.href;
+      if (
+        !url.startsWith('http://#') &&
+        !url.startsWith('file://') &&
+        !url.startsWith('http://wails.localhost:')
+      ) {
+        e.preventDefault();
+        window.runtime.BrowserOpenURL(url);
+      }
+    }
+  });
 
   // Clean up the event listener on unmount
   return () => {
