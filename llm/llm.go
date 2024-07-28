@@ -2,6 +2,7 @@ package llm
 
 import (
 	"chatalice/store"
+	"encoding/json"
 
 	"context"
 	"errors"
@@ -135,6 +136,8 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 	}, messages...)
 
 	messages = append(messages, userInput.toLLMMessage())
+	dbs, _ := json.Marshal(messages)
+	fmt.Println(string(dbs))
 	fmt.Println("Streaming...", msgHistory, messages)
 	// TODO chat.MaxInputTokens setting here
 	stream(c, model.ModelName, chat.MaxOutputTokens, messages, callback)

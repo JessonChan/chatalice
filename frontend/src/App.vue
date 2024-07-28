@@ -12,6 +12,8 @@ import 'highlight.js/styles/atom-one-dark.css'
 const chats = ref([]);
 const currentChatIndex = ref(0);
 const userInput = ref('');
+const uploadedImages = ref([])
+const fullImageSrc = ref('')
 const messageContainer = ref(null);
 const chatContainer = ref(null);
 const menuItems = ref([]);
@@ -111,6 +113,7 @@ const sendMessage = () => {
     currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
     Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
+      Images: uploadedImages.value.join(","),
       ChatID: chats.value[currentChatIndex.value].id,
       ModelID: currentModelId.value,
     })).then(response => {
@@ -128,6 +131,25 @@ const sendMessage = () => {
     }
   }
 };
+
+const handleImageUpload = (event) => {
+  const files = event.target.files;
+  console.log(files);
+  for (let file of files) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      uploadedImages.value.push(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+const removeImage = (index) => {
+  uploadedImages.value.splice(index, 1);
+}
+
+const showFullImage = (imageSrc) => {
+  fullImageSrc.value = imageSrc;
+}
 
 const handleKeyDown = (event) => {
   if ((event.key === 'Enter' && event.ctrlKey && !navigator.platform.toUpperCase().includes('MAC')) ||
@@ -349,21 +371,48 @@ EventsOn("appendMessage", (data) => {
           </div>
         </div>
       </div>
-      <div class="flex items-center p-4 border-t border-gray-200" style="height: 33.33%;">
-        <div class="flex-1 flex items-center relative" style="height: 100%;">
+      <div class="flex-1 flex flex-col relative" style="height: 100%;">
+        <!-- 图片上传按钮和预览区域 -->
+        <div class="mb-2 px-4">
+          <label for="image-upload" class="cursor-pointer inline-block text-gray-500 hover:text-gray-700">
+            <i class="fas fa-image text-xl"></i>
+          </label>
+          <input id="image-upload" type="file" accept="image/*" multiple class="hidden" @change="handleImageUpload">
+
+          <!-- 图片预览区域 -->
+          <div class="mt-2 flex flex-wrap gap-2">
+            <div v-for="(image, index) in uploadedImages" :key="index" class="relative">
+              <img :src="image" class="w-16 h-16 object-cover rounded-md cursor-pointer" @click="showFullImage(image)">
+              <button @click="removeImage(index)"
+                class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息输入区域 -->
+        <div class="flex-1 relative">
           <textarea v-model="userInput" placeholder="Type your question here..."
-            class="w-full h-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none"></textarea>
+            class="w-full h-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none resize-none"></textarea>
+
+          <!-- 浮动图标 -->
           <div class="floating-icons">
             <div class="absolute inset-y-0 right-0 flex items-center space-x-4 pr-4">
               <i class="fas fa-plus-square text-gray-500 cursor-pointer"></i>
-              <i class="fas fa-image text-gray-500 cursor-pointer"></i>
               <i class="fas fa-file-alt text-gray-500 cursor-pointer"></i>
               <i class="fas fa-folder-open text-gray-500 cursor-pointer"></i>
               <i class="fas fa-paperclip text-gray-500 cursor-pointer"></i>
-              <i :class="['fas', 'fa-paper-plane', 'text-blue-500', 'cursor-pointer', { 'disabled': !userInput.trim() }]"
+              <i :class="['fas', 'fa-paper-plane', 'text-blue-500', 'cursor-pointer', { 'opacity-50 cursor-not-allowed': !userInput.trim() }]"
                 @click="sendMessage"></i>
             </div>
           </div>
+        </div>
+
+        <!-- 全尺寸图片模态框 -->
+        <div v-if="fullImageSrc" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          @click="fullImageSrc = null">
+          <img :src="fullImageSrc" class="max-w-full max-h-full" @click.stop>
         </div>
       </div>
     </div>

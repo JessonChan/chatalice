@@ -99,6 +99,7 @@ func NewChat(chatId, modelId uint) Chat {
 type Message struct {
 	gorm.Model
 	Content string `json:"content"`
+	Images  string `json:"images"`
 	ChatID  uint   `json:"chatId"`
 	ModelID uint   `json:"modelId"`
 	Role    string `json:"role"`

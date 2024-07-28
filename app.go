@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -136,10 +137,11 @@ func (a *App) call(fn string, args string) any {
 		store.InsertMessage(msg)
 		answerID := store.InsertMessage(store.Message{
 			ChatID:  msg.ChatID,
+			Images:  msg.Images,
 			Role:    "assistant",
 			Content: "",
 		})
-		go llm.Stream(model, chat, messages, llm.UserInput{Content: msg.Content}, func(chuckText string) {
+		go llm.Stream(model, chat, messages, llm.UserInput{Content: msg.Content, Images: strings.Split(msg.Images, ",")}, func(chuckText string) {
 			if chuckText == "" {
 				return
 			}
