@@ -29,6 +29,7 @@ const maxInputTokens = ref(4096);
 const maxOutputTokens = ref(4096);
 const systemPrompt = ref('You are a helpful assistant.');
 const shouldScroll = ref(true);
+const messagesToShow = ref(5); // 默认显示的消息数量
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
@@ -323,6 +324,25 @@ EventsOn("updateMessage", (data) => {
     }
   }
 });
+
+const displayedMessages = computed(() => {
+  return currentChat.value?.messages.slice(-messagesToShow.value);
+});
+
+const handleScroll = (event) => {
+  const { scrollTop, clientHeight, scrollHeight } = event.target;
+  if (scrollTop === 0) {
+    // 当滚动到顶部时，加载更多消息
+    messagesToShow.value += 5;
+    // 强制更新视图，设置 scrollTop 为一个小的正值
+    nextTick(() => {
+      event.target.scrollTop = 1; // 或者设置为其他小值
+    });
+  } else if (scrollHeight - scrollTop === clientHeight) {
+    // 当滚动到最底部时，重置显示的消息数量
+    messagesToShow.value = 5;
+  }
+};
 </script>
 
 <template>
@@ -369,15 +389,14 @@ EventsOn("updateMessage", (data) => {
         </div>
 
       </div>
-      <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto message-scroll">
-        <div v-for="(msg, index) in currentChat?.messages" :key="index" class="mb-4">
+      <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto message-scroll" @scroll="handleScroll">
+        <div v-for="(msg, index) in displayedMessages" :key="index" class="mb-4">
           <div class="flex items-start ">
             <div class="flex-shrink-0 mr-3">
               <i
                 :class="['fas w-6', msg.isUser ? 'fa-user' : 'fa-robot', 'text-2xl', msg.isUser ? 'text-blue-500' : 'text-green-500']"></i>
             </div>
             <div class="flex-grow">
-              <!-- <p class="text-gray-800 text-left">{{ markdown.render(msg.text) }}</p> -->
               <p class="text-gray-800 text-left" v-html="markdownToHtml(msg.text)"></p>
               <i class="fas fa-spinner fa-1x fa-spin text-gray-800" v-if="!msg.text"></i>
             </div>
@@ -520,7 +539,7 @@ EventsOn("updateMessage", (data) => {
       </p>
 
       <p class="text-lg text-gray-600 mb-6">
-        有趣的是，在计算机世界里，Alice常常和她的好朋友Bob一起出现在各种思想实验中。而在我们的项目里，Alice决定独自前行，成为你的专属对话伙伴！
+        有趣的是，在计算机世界里，Alice常常和���的好朋友Bob一起出现在各种思想实验中。而在我们的项目里，Alice决定独自前行，成为你的专属对话伙伴！
       </p>
 
       <div class="text-center">
