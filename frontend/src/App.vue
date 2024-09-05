@@ -170,7 +170,7 @@ const refreshModelList = () => {
   })
 }
 
-const getChats = () => {
+const getChats = (isIntialLoad = false) => {
   let lastSeen = new Date().getTime() / 1000;
   if (chats.value.length > 0) {
     chats.value.forEach(item => {
@@ -190,9 +190,8 @@ const getChats = () => {
     if (chats.value.length == 0) {
       newChat();
     }
-    if (chatContainer.value && chatContainer.value.scrollHeight <= chatContainer.value.clientHeight) {
-      //TODO 检查是不是充满滚动区域
-      // getChats()
+    if (isIntialLoad && chats.value.length > 0) {
+      selectChat(0);
     }
   })
 }
@@ -218,7 +217,7 @@ onMounted(() => {
     },
   ];
   refreshModelList();
-  getChats();
+  getChats(true);
   window.addEventListener('keydown', handleKeyDown);
 
   // 监听鼠标事件，停止滚动
@@ -227,9 +226,6 @@ onMounted(() => {
       stopScrolling();
     }, { passive: true });
   });
-  setTimeout(() => {
-    selectChat(0);
-  }, 100);
 
   // Open all links externally
   // This issue https://github.com/wailsapp/wails/issues/2691
