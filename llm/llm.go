@@ -41,6 +41,7 @@ func Title(model store.Model, userInput string) (title string) {
 		fmt.Printf("ChatCompletion error: %v\n", err)
 		return
 	}
+	fmt.Printf("%+v", resp)
 	title = resp.Choices[0].Message.Content
 	return
 }

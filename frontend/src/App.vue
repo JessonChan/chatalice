@@ -311,6 +311,18 @@ EventsOn("appendMessage", (data) => {
     scrollToBottom();
   }
 });
+EventsOn("updateMessage", (data) => {
+  console.log(data)
+  let message = JSON.parse(data);
+  // 从后向前查找消息
+  for (let i = currentChat.value.messages.length - 1; i >= 0; i--) {
+    if (currentChat.value.messages[i].id === message.message_id) {
+      currentChat.value.messages[i].text = message.text;
+      scrollToBottom();
+      break; // 找到后退出循环
+    }
+  }
+});
 </script>
 
 <template>

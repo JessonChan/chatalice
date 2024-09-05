@@ -8,7 +8,8 @@ import (
 )
 
 var model = store.Model{
-	ModelName: "claude-3-5-sonnet-20240620",
+	// ModelName: "claude-3-5-sonnet-20240620",
+	ModelName: "gpt-4o-mini",
 	Key:       os.Getenv("OPENAI_API_KEY"),
 	BaseURL:   os.Getenv("OPENAI_API_BASE_URL"),
 }

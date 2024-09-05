@@ -211,6 +211,6 @@ func UpdateMessageContentByID(id uint, content string) {
 	db := getDb()
 	er := db.Model(&Message{}).Where("id = ?", id).Update("content", gorm.Expr("content || ?", content))
 	if er.Error != nil {
-		fmt.Sprintf("update error %v", er.Error)
+		fmt.Printf("update error %v", er.Error)
 	}
 }

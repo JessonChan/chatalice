@@ -145,17 +145,19 @@ func (a *App) call(fn string, args string) any {
 		if len(msg.Images) > 0 {
 			images = strings.Split(msg.Images, "&")
 		}
+		fullMessage := ``
 		go llm.Stream(model, chat, messages, llm.UserInput{Content: msg.Content, Images: images}, func(chuckText string) {
 			if chuckText == "" {
 				return
 			}
 			fmt.Println("callback", answerID)
+			fullMessage += chuckText
 			bs, _ := json.Marshal(map[string]any{
 				"message_id": answerID,
-				"text":       chuckText,
+				"text":       fullMessage,
 			})
 			store.UpdateMessageContentByID(answerID, chuckText)
-			runtime.EventsEmit(a.ctx, "appendMessage", string(bs))
+			runtime.EventsEmit(a.ctx, "updateMessage", string(bs))
 		})
 		return map[string]any{
 			"message_id": answerID,
