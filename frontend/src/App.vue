@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { Call } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime';
+import { WindowMaximise, WindowUnfullscreen, WindowToggleMaximise } from '../wailsjs/runtime';
 
 import { Marked } from 'marked';
 import { markedHighlight } from "marked-highlight"
@@ -30,6 +31,12 @@ const maxOutputTokens = ref(4096);
 const systemPrompt = ref('You are a helpful assistant.');
 const shouldScroll = ref(true);
 const messagesToShow = ref(5); // 默认显示的消息数量
+const isMaximized = ref(false);
+
+const toggleMaximize = async () => {
+  WindowToggleMaximise()
+  return;
+};
 
 const submitSettings = () => {
   submittedSettings.value.push({ ...settings.value });
@@ -345,7 +352,7 @@ const handleScroll = (event) => {
   <div class="flex h-screen">
     <!-- Sidebar -->
     <div class="flex-col w-64 bg-gray-100 border-r border-gray-200">
-      <div class="flex items-center justify-center h-16 border-b border-gray-200">
+      <div class="flex items-center justify-center h-16 border-b border-gray-200" @dblclick="toggleMaximize">
         <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6">
         <span class="text-xl font-semibold ps-2">ChatAlice</span>
       </div>
@@ -374,7 +381,7 @@ const handleScroll = (event) => {
     </div>
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
-      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200" @dblclick="toggleMaximize">
         <div class="flex items-center">
           <span class="text-lg font-medium">{{ currentChat?.title }}</span>
           <div class="relative pl-2">
