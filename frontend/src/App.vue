@@ -352,9 +352,10 @@ const handleScroll = (event) => {
   <div class="flex h-screen">
     <!-- Sidebar -->
     <div class="flex-col w-64 bg-gray-100 border-r border-gray-200">
-      <div class="flex items-center justify-center h-16 border-b border-gray-200" @dblclick="toggleMaximize">
-        <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6">
-        <span class="text-xl font-semibold ps-2">ChatAlice</span>
+      <div class="flex items-center justify-center h-16 border-b border-gray-200" @dblclick="toggleMaximize"
+        style="user-select: none;--wails-draggable:drag">
+        <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6" style="--wails-draggable:no-drag">
+        <span class="text-xl font-semibold ps-2" style="--wails-draggable:no-drag">ChatAlice</span>
       </div>
       <div ref="chatContainer" class="flex-col-1 w-64 overflow-y-auto h-[calc(2/3*100vh-64px)]"
         @scroll="handleChatsScroll">
@@ -381,8 +382,9 @@ const handleScroll = (event) => {
     </div>
     <!-- Main Content -->
     <div class="flex-1 flex flex-col">
-      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200" @dblclick="toggleMaximize">
-        <div class="flex items-center">
+      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200" @dblclick="toggleMaximize"
+        style="--wails-draggable:drag">
+        <div class="flex items-center" style="--wails-draggable:no-drag">
           <span class="text-lg font-medium">{{ currentChat?.title }}</span>
           <div class="relative pl-2">
             <span @click="toggleSettingsList"
