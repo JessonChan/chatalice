@@ -351,9 +351,9 @@ const handleScroll = (event) => {
 <template>
   <div class="flex h-screen">
     <!-- Sidebar -->
-    <div class="flex-col w-64 bg-gray-100 border-r border-gray-200">
-      <div class="flex items-center justify-center h-16 border-b border-gray-200" @dblclick="toggleMaximize"
-        style="user-select: none;--wails-draggable:drag">
+    <div id="sidebar" class="flex-col w-64 bg-gray-100 border-r border-gray-200">
+      <div id="sidebar-header" class="flex items-center justify-center h-16 border-r border-gray-200"
+        @dblclick="toggleMaximize" style="user-select: none;--wails-draggable:drag">
         <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6" style="--wails-draggable:no-drag">
         <span class="text-xl font-semibold ps-2" style="--wails-draggable:no-drag">ChatAlice</span>
       </div>
@@ -372,7 +372,7 @@ const handleScroll = (event) => {
           </ul>
         </div>
       </div>
-      <div class="p-4 border-t border-gray-200 h-[33%] flex flex-col justify-end">
+      <div class="p-4 h-[33%] flex flex-col justify-end">
         <div v-for="(item, index) in menuItems" :key="index" class="flex items-center mb-2 p-2 cursor-pointer"
           @click="item.onClickMethod()">
           <i :class="item.icon" class="mr-2"></i>
@@ -381,9 +381,9 @@ const handleScroll = (event) => {
       </div>
     </div>
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200" @dblclick="toggleMaximize"
-        style="--wails-draggable:drag">
+    <div id="main-content" class="flex-1 flex flex-col">
+      <div id="main-content-header" class="flex items-center justify-between h-16 px-4 border-r border-gray-200"
+        @dblclick="toggleMaximize" style="--wails-draggable:drag">
         <div class="flex items-center" style="--wails-draggable:no-drag">
           <span class="text-lg font-medium">{{ currentChat?.title }}</span>
           <div class="relative pl-2">
