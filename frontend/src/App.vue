@@ -87,6 +87,10 @@ const toggleSettingsList = () => {
   }
 };
 
+const toggleSidebar = () => {
+  document.getElementById('sidebar')?.classList.toggle('hidden');
+  document.getElementById('miniSidebar')?.classList.toggle('hidden');
+};
 
 const deleteSetting = (index) => {
   submittedSettings.value.splice(index, 1);
@@ -349,7 +353,20 @@ const handleScroll = (event) => {
 </script>
 
 <template>
+  <div style="height: 12px; width: 100%;"></div>
   <div class="flex h-screen">
+    <div id="miniSidebar" class="flex-col w-64 bg-gray-100 border-r border-gray-200 hidden">
+      <div id="miniSidebar-header" class="flex w-8 items-center justify-center h-16 border-r border-gray-200"
+        @dblclick="toggleMaximize" style="user-select: none;--wails-draggable:drag">
+        <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6" style="--wails-draggable:no-drag">
+      </div>
+      <div class="flex items-center justify-between w-full">
+        <i class="fas fa-chevron-circle-right cursor-pointer mx-auto" @click="toggleSidebar"></i>
+      </div>
+      <div class="flex items-center justify-between w-full py-4">
+        <i class="fas fa-plus cursor-pointer mx-auto" @click="newChat"></i>
+      </div>
+    </div>
     <!-- Sidebar -->
     <div id="sidebar" class="flex-col w-64 bg-gray-100 border-r border-gray-200">
       <div id="sidebar-header" class="flex items-center justify-center h-16 border-r border-gray-200"
@@ -357,6 +374,11 @@ const handleScroll = (event) => {
         <img src="./assets/images/appicon.png" alt="ChatAlice logo" class="h-6 w-6" style="--wails-draggable:no-drag">
         <span class="text-xl font-semibold ps-2" style="--wails-draggable:no-drag">ChatAlice</span>
       </div>
+      <div class="flex items-center justify-between w-full px-8">
+        <i class="fas fa-bars cursor-pointer" @click="toggleSidebar"></i>
+        <i class="fas fa-plus cursor-pointer" @click="newChat"></i>
+      </div>
+
       <div ref="chatContainer" class="flex-col-1 w-64 overflow-y-auto h-[calc(2/3*100vh-64px)]"
         @scroll="handleChatsScroll">
         <div class="p-4">
