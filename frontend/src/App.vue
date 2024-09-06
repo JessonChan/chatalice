@@ -391,7 +391,7 @@ const handleScroll = (event) => {
                 :class="['flex items-center p-2 cursor-pointer rounded', currentChatIndex === index ? 'bg-gray-200' : '']"
                 @click="selectChat(index)">
                 <!-- <i class="fas fa-file-alt mr-2"></i> -->
-                <span>{{ chat.title }}</span>
+                <span class="chat-title" :title="chat.title">{{ chat.title }}</span>
               </div>
             </li>
           </ul>
@@ -630,5 +630,12 @@ body {
 .message-scroll::-webkit-scrollbar-thumb {
   background-color: #CBD5E0;
   border-radius: 4px;
+}
+.chat-title {
+  display: -webkit-box; /* 使其成为弹性盒子 */
+  -webkit-box-orient: vertical; /* 垂直排列 */
+  -line-clamp: 2; /* 限制为两行 */
+  overflow: hidden; /* 隐藏超出部分 */
+  text-overflow: ellipsis; /* 使用省略号表示被隐藏的文本 */
 }
 </style>
