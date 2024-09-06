@@ -353,7 +353,10 @@ const handleScroll = (event) => {
 </script>
 
 <template>
-  <div style="height: 12px; width: 100%;"></div>
+  <div style="height: 12px; width: 100%;">
+    <div class="flex-col w-64 bg-gray-100 border-r border-gray-200" style="min-height: 12px;">
+    </div>
+  </div>
   <div class="flex h-screen">
     <div id="miniSidebar" class="flex-col w-64 bg-gray-100 border-r border-gray-200 hidden">
       <div id="miniSidebar-header" class="flex w-8 items-center justify-center h-16 border-r border-gray-200"
