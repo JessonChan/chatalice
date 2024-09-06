@@ -615,6 +615,9 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #CBD5E0 #EDF2F7;
 }
+.message-scroll pre code{
+  width: calc(70%);
+}
 
 .message-scroll::-webkit-scrollbar {
   width: 8px;
