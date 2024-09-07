@@ -21,7 +21,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title: "ChatAlice",
 		Mac: &mac.Options{
-			TitleBar: mac.TitleBarHiddenInset(),
+			TitleBar: mac.TitleBarHidden(),
 		},
 		Windows: &windows.Options{},
 		Width:   1024,
