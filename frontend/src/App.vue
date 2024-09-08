@@ -313,10 +313,13 @@ EventsOn("appendMessage", (data) => {
   let message = JSON.parse(data);
   // console.log("message", message, currentChat.value.messages);
   // loop currentChat.messages to find the id===message.message_id and upate the text+=text
-  const msg = [...currentChat.value.messages].find((m) => m.id === message.message_id);
-  if (msg) {
-    msg.text += message.text;
-    scrollToBottom();
+  // 从后向前查找消息
+  for (let i = currentChat.value.messages.length - 1; i >= 0; i--) {
+    if (currentChat.value.messages[i].id === message.message_id) {
+      currentChat.value.messages[i].text += message.text;
+      scrollToBottom();
+      break; // 找到后退出循环
+    }
   }
 });
 EventsOn("updateMessage", (data) => {
@@ -616,6 +619,8 @@ body {
   scrollbar-color: #CBD5E0 #EDF2F7;
 }
 .message-scroll pre code{
+  padding-top: 12px;
+  padding-bottom: 32px;
   width: calc(70%);
 }
 
