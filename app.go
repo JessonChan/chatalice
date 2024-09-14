@@ -88,6 +88,7 @@ func (a *App) call(fn string, args string) any {
 	case "updateChatSetting":
 		// TODO why this is so hard and confusing to understand
 		setting := struct {
+			Title              string `json:"title"`
 			ChatId             uint   `json:"chatId"`
 			ModelId            uint   `json:"modelId"`
 			ConversationRounds int    `json:"conversationRounds"`
@@ -100,6 +101,7 @@ func (a *App) call(fn string, args string) any {
 		if chat.ID == 0 {
 			chat = store.NewChat(setting.ChatId, setting.ModelId)
 		}
+		chat.Title = setting.Title
 		chat.ConversationRounds = setting.ConversationRounds
 		chat.MaxInputTokens = setting.MaxInputTokens
 		chat.MaxOutputTokens = setting.MaxOutputTokens
