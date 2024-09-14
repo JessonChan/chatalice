@@ -24,6 +24,7 @@ const showSettingsList = ref(false);
 const settings = ref({ name: '', key: '', baseUrl: '' });
 const submittedSettings = ref([]);
 const showChatSetting = ref(false);
+const selectTitle= ref('');
 const selectedModel = ref(null);
 const conversationRounds = ref(3);
 const maxInputTokens = ref(4096);
@@ -46,7 +47,7 @@ const submitSettings = () => {
 
 const submitChatSettings = () => {
   chats.value[currentChatIndex.value] = {
-    title: currentChat.value.title,
+    title: selectTitle.value,
     messages: currentChat.value.messages,
     id: currentChat.value.id,
     modelId: selectedModel.value.id,
@@ -77,6 +78,7 @@ const toggleSettingsList = () => {
     // showSettingsList.value = true;
     showChatSetting.value = true;
     selectedModel.value = submittedSettings.value.find(item => item.id === currentModelId.value) ?? submittedSettings.value[0]
+    selectTitle.value=currentChat.value.title
     conversationRounds.value = currentChat.value.conversationRounds ?? 3
     maxInputTokens.value = currentChat.value.maxInputTokens ?? 4096
     maxOutputTokens.value = currentChat.value.maxOutputTokens ?? 4096
@@ -354,7 +356,6 @@ const handleScroll = (event) => {
   }
 };
 </script>
-
 <template>
   <div style="height: 12px; width: 100%;">
     <div class="flex-col w-64 bg-gray-100 border-r border-gray-200" style="min-height: 12px;">
@@ -530,6 +531,10 @@ const handleScroll = (event) => {
     <div v-if="showChatSetting" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white p-6 rounded-lg w-96">
         <h2 class="text-lg font-bold mb-4">Settings</h2>
+        <div class="mb-4">
+          <label class="block text-sm font-bold mb-2">Title</label>
+          <input v-model="selectTitle" type="text" class="w-full p-2 border border-gray-300 rounded">
+        </div>
         <div class="mb-4">
           <label class="block text-sm font-bold mb-2">Model</label>
           <select v-model="selectedModel" class="w-full p-2 border border-gray-300 rounded">
