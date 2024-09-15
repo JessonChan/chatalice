@@ -31,7 +31,7 @@ const maxInputTokens = ref(4096);
 const maxOutputTokens = ref(4096);
 const systemPrompt = ref('You are a helpful assistant.');
 const shouldScroll = ref(true);
-const messagesToShow = ref(5); // 默认显示的消息数量
+const messagesToShow = ref(10); // 默认显示的消息数量
 const isMaximized = ref(false);
 
 const toggleMaximize = async () => {
@@ -343,16 +343,17 @@ const displayedMessages = computed(() => {
 
 const handleScroll = (event) => {
   const { scrollTop, clientHeight, scrollHeight } = event.target;
-  if (scrollTop === 0) {
+  console.log(scrollTop, clientHeight, scrollHeight,messagesToShow.value)
+  if (scrollTop === 0 && clientHeight < scrollHeight) {
     // 当滚动到顶部时，加载更多消息
-    messagesToShow.value += 5;
+    messagesToShow.value = Math.floor(messagesToShow.value * 1.5); // 确保乘积是整数
     // 强制更新视图，设置 scrollTop 为一个小的正值
     nextTick(() => {
       event.target.scrollTop = 1; // 或者设置为其他小值
     });
-  } else if (scrollHeight - scrollTop === clientHeight) {
+  } else if (scrollHeight - scrollTop === clientHeight ) {
     // 当滚动到最底部时，重置显示的消息数量
-    messagesToShow.value = 5;
+    messagesToShow.value = 10;
   }
 };
 </script>
