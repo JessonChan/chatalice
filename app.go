@@ -156,11 +156,12 @@ func (a *App) call(fn string, args string) any {
 			fullMessage += chuckText
 			bs, _ := json.Marshal(map[string]any{
 				"message_id": answerID,
-				"text":       fullMessage,
+				// "text":       fullMessage,
+				"text": chuckText,
 			})
 			store.UpdateMessageContentByID(answerID, chuckText)
-			runtime.EventsEmit(a.ctx, "updateMessage", string(bs))
-			// runtime.EventsEmit(a.ctx, "appendMessage", string(bs))
+			// runtime.EventsEmit(a.ctx, "updateMessage", string(bs))
+			runtime.EventsEmit(a.ctx, "appendMessage", string(bs))
 		})
 		return map[string]any{
 			"message_id": answerID,
