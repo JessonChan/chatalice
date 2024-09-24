@@ -59,10 +59,12 @@ func getDb() *gorm.DB {
 
 type Model struct {
 	gorm.Model
-	Name      string `json:"name"`
-	ModelName string `json:"model"`
-	Key       string `json:"key"`
-	BaseURL   string `json:"baseUrl"`
+	Name                  string `json:"name"`
+	ModelName             string `json:"model"`
+	Key                   string `json:"key"`
+	BaseURL               string `json:"baseUrl"`
+	SystemPromptEnabled   bool   `json:"systemPromptEnabled"`
+	StreamResponseEnabled bool   `json:"streamResponseEnabled"`
 }
 
 type Chat struct {

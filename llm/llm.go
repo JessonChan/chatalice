@@ -130,52 +130,67 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 			})
 		}
 	}
-	messages = append([]openai.ChatCompletionMessage{
-		{
-			Role:    "system",
-			Content: chat.SystemPrompt,
-		},
-	}, messages...)
+	if model.SystemPromptEnabled {
+		messages = append([]openai.ChatCompletionMessage{
+			{
+				Role:    "system",
+				Content: chat.SystemPrompt,
+			},
+		}, messages...)
+	}
 
 	messages = append(messages, userInput.toLLMMessage())
 	dbs, _ := json.Marshal(messages)
 	fmt.Println(string(dbs))
 	fmt.Println("Streaming...", msgHistory, messages)
 	// TODO chat.MaxInputTokens setting here
-	stream(c, model.ModelName, chat.MaxOutputTokens, messages, callback)
+	stream(c, model, chat.MaxOutputTokens, messages, callback)
 }
-func stream(c *openai.Client, model string, maxOutputTokens int, messages []openai.ChatCompletionMessage, callback func(string)) {
+func stream(c *openai.Client, model store.Model, maxOutputTokens int, messages []openai.ChatCompletionMessage, callback func(string)) {
 	ctx := context.Background()
 	req := openai.ChatCompletionRequest{
 		// Model: "alibaba/Qwen2-7B-Instruct",
 		// Model: openai.GPT3Dot5Turbo,
 		// Model: "claude-3-5-sonnet-20240620",
 		MaxTokens: maxOutputTokens,
-		Model:     model,
+		Model:     model.ModelName,
 		Messages:  messages,
-		Stream:    true,
+		Stream:    model.StreamResponseEnabled,
 	}
-	stream, err := c.CreateChatCompletionStream(ctx, req)
-	if err != nil {
-		fmt.Printf("ChatCompletionStream error: %v\n", err)
-		return
-	}
-	defer stream.Close()
-
-	fmt.Printf("Stream response: ")
-	for {
-		response, err := stream.Recv()
-		fmt.Println(response, err)
-		if errors.Is(err, io.EOF) {
-			fmt.Println("\nStream finished")
-			// return
-		}
-
+	if model.StreamResponseEnabled {
+		stream, err := c.CreateChatCompletionStream(ctx, req)
 		if err != nil {
-			fmt.Printf("\nStream error: %v\n", err)
+			fmt.Printf("ChatCompletionStream error: %v\n", err)
 			return
 		}
+		defer stream.Close()
+		fmt.Printf("Stream response: ")
+		for {
+			response, err := stream.Recv()
+			fmt.Println(response, err)
+			if errors.Is(err, io.EOF) {
+				fmt.Println("\nStream finished")
+				// return
+			}
 
-		callback(response.Choices[0].Delta.Content)
+			if err != nil {
+				fmt.Printf("\nStream error: %v\n", err)
+				return
+			}
+
+			callback(response.Choices[0].Delta.Content)
+		}
+	} else {
+		resp, err := c.CreateChatCompletion(context.Background(), openai.ChatCompletionRequest{
+			Model:     model.ModelName,
+			Messages:  messages,
+			MaxTokens: 16,
+		})
+		if err != nil {
+			fmt.Printf("ChatCompletion error: %v\n", err)
+			return
+		}
+		fmt.Printf("%+v", resp)
+		callback(resp.Choices[0].Message.Content)
 	}
 }
