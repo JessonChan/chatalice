@@ -70,6 +70,7 @@ func (a *App) call(fn string, args string) any {
 					"id":     message.ID,
 					"isUser": message.Role == "user",
 					"text":   message.Content,
+					"images": message.Images,
 				})
 			}
 			resp = append(resp, map[string]any{

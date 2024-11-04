@@ -482,14 +482,41 @@ const handleScroll = (event) => {
       </div>
       <div ref="messageContainer" class="flex-1 p-4 overflow-y-auto message-scroll" @scroll="handleScroll">
         <div v-for="(msg, index) in displayedMessages" :key="index" class="mb-4">
-          <div class="flex items-start ">
+          <div class="flex items-start">
             <div class="flex-shrink-0 mr-3">
-              <i
-                :class="['fas w-6', msg.isUser ? 'fa-user' : 'fa-robot', 'text-2xl', msg.isUser ? 'text-blue-500' : 'text-green-500']"></i>
+              <i :class="['fas w-6', msg.isUser ? 'fa-user' : 'fa-robot', 'text-2xl', msg.isUser ? 'text-blue-500' : 'text-green-500']"></i>
             </div>
             <div class="flex-grow">
+              <!-- 文本内容 -->
               <p class="text-gray-800 text-left" v-html="markdownToHtml(msg.text)"></p>
               <i class="fas fa-spinner fa-1x fa-spin text-gray-800" v-if="!msg.text"></i>
+              
+              <!-- 消息中的图片显示区域 -->
+              <div v-if="msg.images" class="mt-2 flex flex-wrap gap-2">
+                <template v-if="typeof msg.images === 'string' && msg.images.length > 0">
+                  <div v-for="(image, imgIndex) in msg.images.split('&')" 
+                       :key="imgIndex"
+                       class="relative group border border-gray-200 rounded-lg p-1">
+                    <img :src="image"
+                         class="w-20 h-20 object-cover rounded-md cursor-pointer" 
+                         @click="showFullImage(image)">
+                  </div>
+                </template>
+                <template v-else-if="Array.isArray(msg.images)">
+                  <div v-for="(image, imgIndex) in msg.images" 
+                       :key="imgIndex"
+                       class="relative group border border-gray-200 rounded-lg p-1">
+                    <img :src="image.src || image"
+                         :alt="image.name || 'Image'"
+                         class="w-20 h-20 object-cover rounded-md cursor-pointer" 
+                         @click="showFullImage(image.src || image)">
+                    <span v-if="image.size" 
+                          class="absolute bottom-0 left-0 right-0 text-xs text-center bg-black bg-opacity-50 text-white py-1 rounded-b-md">
+                      {{ (image.size / 1024).toFixed(1) }}KB
+                    </span>
+                  </div>
+                </template>
+              </div>
             </div>
           </div>
         </div>
