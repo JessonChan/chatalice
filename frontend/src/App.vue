@@ -33,6 +33,10 @@ const systemPrompt = ref('You are a helpful assistant.');
 const shouldScroll = ref(true);
 const messagesToShow = ref(10); // 默认显示的消息数量
 const isMaximized = ref(false);
+const isUploading = ref(false);
+const imageError = ref('');
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 const toggleMaximize = async () => {
   WindowToggleMaximise()
@@ -119,27 +123,45 @@ const stopScrolling = () => {
   shouldScroll.value = false;
 };
 const sendMessage = () => {
-  if (userInput.value.trim() !== '') {
+  if (userInput.value.trim() !== '' || uploadedImages.value.length > 0) {
     shouldScroll.value = true;
-    console.log("send message", userInput.value, shouldScroll.value)
-    // TODO 自动滚动时分页加载消息
-    currentChat.value.messages = currentChat.value.messages.slice(-8)
-    currentChat.value.messages.push({ text: userInput.value.trim(), isUser: true });
+    currentChat.value.messages = currentChat.value.messages.slice(-8);
+    
+    // 准备图片数据
+    const imageUrls = uploadedImages.value.map(img => img.src);
+    
+    currentChat.value.messages.push({ 
+      text: userInput.value.trim(),
+      images: [...uploadedImages.value], // 保存图片信息到消息中
+      isUser: true 
+    });
+
     Call("sendMessage", JSON.stringify({
       Content: userInput.value.trim(),
-      Images: uploadedImages.value.join("&"),
+      Images: imageUrls.join("&"),
       ChatID: chats.value[currentChatIndex.value].id,
       ModelID: currentModelId.value,
     })).then(response => {
       response = JSON.parse(response);
-      currentChat.value.messages.push({ text: response.text, isUser: false, id: response.message_id });
+      currentChat.value.messages.push({ 
+        text: response.text, 
+        isUser: false, 
+        id: response.message_id 
+      });
       scrollToBottom();
     }).catch(error => {
       console.error('Error:', error);
+      // 添加错误处理提示
+      currentChat.value.messages.push({ 
+        text: "Failed to send message. Please try again.",
+        isUser: false,
+        isError: true
+      });
     });
+
     userInput.value = '';
     uploadedImages.value = [];
-    // 将当前的聊天上升到第一个
+    
     if (currentChatIndex.value > 0) {
       chats.value.unshift(chats.value.splice(currentChatIndex.value, 1)[0]);
       currentChatIndex.value = 0;
@@ -147,20 +169,54 @@ const sendMessage = () => {
   }
 };
 
-const handleImageUpload = (event) => {
+const handleImageUpload = async (event) => {
   const files = event.target.files;
-  console.log(files);
-  for (let file of files) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      uploadedImages.value.push(e.target.result);
-    };
-    reader.readAsDataURL(file);
+  isUploading.value = true;
+  imageError.value = '';
+  
+  try {
+    for (let file of files) {
+      if (file.size > MAX_IMAGE_SIZE) {
+        imageError.value = `File ${file.name} exceeds 5MB limit`;
+        continue;
+      }
+      
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        imageError.value = `File ${file.name} must be JPEG, PNG, GIF or WebP`;
+        continue;
+      }
+
+      const reader = new FileReader();
+      await new Promise((resolve, reject) => {
+        reader.onload = (e) => {
+          uploadedImages.value.push({
+            id: Date.now(),
+            src: e.target.result,
+            name: file.name,
+            size: file.size
+          });
+          resolve();
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+  } catch (error) {
+    imageError.value = 'Failed to upload image';
+    console.error('Image upload error:', error);
+  } finally {
+    isUploading.value = false;
+    // 清空 input 以允许重复上传相同文件
+    event.target.value = '';
   }
-}
-const removeImage = (index) => {
-  uploadedImages.value.splice(index, 1);
-}
+};
+
+const removeImage = (id) => {
+  const index = uploadedImages.value.findIndex(img => img.id === id);
+  if (index !== -1) {
+    uploadedImages.value.splice(index, 1);
+  }
+};
 
 const showFullImage = (imageSrc) => {
   fullImageSrc.value = imageSrc;
@@ -441,19 +497,42 @@ const handleScroll = (event) => {
       <div class="flex-1 flex flex-col relative" style="height: 100%;">
         <!-- 图片上传按钮和预览区域 -->
         <div class="mb-2 px-4">
-          <label for="image-upload" class="cursor-pointer inline-block text-gray-500 hover:text-gray-700">
-            <i class="fas fa-image text-xl"></i>
-          </label>
-          <input id="image-upload" type="file" accept="image/*" multiple class="hidden" @change="handleImageUpload">
+          <div class="flex items-center gap-2">
+            <label for="image-upload" class="cursor-pointer inline-flex items-center text-gray-500 hover:text-gray-700">
+              <i class="fas fa-image text-xl"></i>
+              <span class="ml-2 text-sm">Add Image</span>
+            </label>
+            <input id="image-upload" type="file" accept="image/*" multiple class="hidden" @change="handleImageUpload">
+            
+            <!-- 显示上传状态和错误信息 -->
+            <div v-if="isUploading" class="text-blue-500">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span class="ml-2">Uploading...</span>
+            </div>
+            <div v-if="imageError" class="text-red-500 text-sm">
+              {{ imageError }}
+            </div>
+          </div>
 
           <!-- 图片预览区域 -->
           <div class="mt-2 flex flex-wrap gap-2">
-            <div v-for="(image, index) in uploadedImages" :key="index" class="relative">
-              <img :src="image" class="w-16 h-16 object-cover rounded-md cursor-pointer" @click="showFullImage(image)">
-              <button @click="removeImage(index)"
-                class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
-                <i class="fas fa-times"></i>
-              </button>
+            <div v-for="image in uploadedImages" :key="image.id" 
+                 class="relative group border border-gray-200 rounded-lg p-1">
+              <img :src="image.src" 
+                   :alt="image.name"
+                   class="w-20 h-20 object-cover rounded-md cursor-pointer" 
+                   @click="showFullImage(image.src)">
+              <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 
+                          transition-opacity duration-200 rounded-md flex items-center justify-center">
+                <button @click.stop="removeImage(image.id)" 
+                        class="text-white hover:text-red-500 transition-colors duration-200">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <span class="absolute bottom-0 left-0 right-0 text-xs text-center bg-black bg-opacity-50 
+                         text-white py-1 rounded-b-md">
+                {{ (image.size / 1024).toFixed(1) }}KB
+              </span>
             </div>
           </div>
         </div>
@@ -578,7 +657,7 @@ const handleScroll = (event) => {
       </p>
 
       <p class="text-lg text-gray-600 mb-6">
-        有趣的是，在计算机世界里，Alice常常和���的好朋友Bob一起出现在各种思想实验中。而在我们的项目里，Alice决定独自前行，成为你的专属对话伙伴！
+        有趣的是，在计算机世界里，Alice常常和的好朋友Bob一起出现在各种思想实验中。而在我们的项目里，Alice决定独自前行，成为你的专属对话伙伴！
       </p>
 
       <div class="text-center">
@@ -648,5 +727,51 @@ body {
   -line-clamp: 2; /* 限制为两行 */
   overflow: hidden; /* 隐藏超出部分 */
   text-overflow: ellipsis; /* 使用省略号表示被隐藏的文本 */
+}
+
+.image-preview-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  padding: 8px;
+}
+
+.image-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-preview-item:hover .image-actions {
+  opacity: 1;
+}
+
+.image-actions {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #3b82f6;
+  transition: width 0.3s ease;
 }
 </style>
