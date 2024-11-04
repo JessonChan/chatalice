@@ -541,7 +541,7 @@ const handleScroll = (event) => {
             </div>
           </div>
 
-          <!-- 图片预览区域 -->
+          <!-- 图��预览区域 -->
           <div class="mt-2 flex flex-wrap gap-2">
             <div v-for="image in uploadedImages" :key="image.id" 
                  class="relative group border border-gray-200 rounded-lg p-1">
@@ -567,19 +567,8 @@ const handleScroll = (event) => {
         <!-- 消息输入区域 -->
         <div class="flex-1 relative">
           <textarea v-model="userInput" placeholder="Type your question here..."
-            class="w-full h-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none resize-none"></textarea>
-
-          <!-- 浮动图标 -->
-          <div class="floating-icons">
-            <div class="absolute inset-y-0 right-0 flex items-center space-x-4 pr-4">
-              <i class="fas fa-plus-square text-gray-500 cursor-pointer"></i>
-              <i class="fas fa-file-alt text-gray-500 cursor-pointer"></i>
-              <i class="fas fa-folder-open text-gray-500 cursor-pointer"></i>
-              <i class="fas fa-paperclip text-gray-500 cursor-pointer"></i>
-              <i :class="['fas', 'fa-paper-plane', 'text-blue-500', 'cursor-pointer', { 'opacity-50 cursor-not-allowed': !userInput.trim() }]"
-                @click="sendMessage"></i>
-            </div>
-          </div>
+            class="w-full h-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none resize-none">
+          </textarea>
         </div>
 
         <!-- 全尺寸图片模态框 -->
@@ -716,14 +705,6 @@ body {
 .disabled {
   pointer-events: none;
   opacity: 0.5;
-}
-
-.floating-icons {
-  position: absolute;
-  bottom: 0.5rem;
-  right: 0.5rem;
-  display: flex;
-  gap: 0.5rem;
 }
 
 .message-scroll {
