@@ -493,8 +493,8 @@ const handleScroll = (event) => {
               
               <!-- 消息中的图片显示区域 -->
               <div v-if="msg.images" class="mt-2 flex flex-wrap gap-2">
-                <template v-if="typeof msg.images === 'string' && msg.images.length > 0">
-                  <div v-for="(image, imgIndex) in msg.images.split('&')" 
+                <template v-if="typeof msg.images === 'string'">
+                  <div v-for="(image, imgIndex) in (msg.images ? msg.images.split('&').filter(Boolean) : [])" 
                        :key="imgIndex"
                        class="relative group border border-gray-200 rounded-lg p-1">
                     <img :src="image"

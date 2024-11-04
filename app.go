@@ -140,7 +140,6 @@ func (a *App) call(fn string, args string) any {
 		store.InsertMessage(msg)
 		answerID := store.InsertMessage(store.Message{
 			ChatID:  msg.ChatID,
-			Images:  msg.Images,
 			Role:    "assistant",
 			Content: "",
 		})
