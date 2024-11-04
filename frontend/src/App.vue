@@ -271,6 +271,50 @@ const handleChatsScroll = (event) => {
   }
 };
 
+const handlePaste = async (event) => {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      event.preventDefault();
+      
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      if (file.size > MAX_IMAGE_SIZE) {
+        imageError.value = `Image exceeds 5MB limit`;
+        continue;
+      }
+      
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        imageError.value = `Image must be JPEG, PNG, GIF or WebP`;
+        continue;
+      }
+
+      try {
+        const reader = new FileReader();
+        await new Promise((resolve, reject) => {
+          reader.onload = (e) => {
+            uploadedImages.value.push({
+              id: Date.now(),
+              src: e.target.result,
+              name: 'Pasted Image',
+              size: file.size
+            });
+            resolve();
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      } catch (error) {
+        imageError.value = 'Failed to process pasted image';
+        console.error('Image paste error:', error);
+      }
+    }
+  }
+};
+
 onMounted(() => {
   menuItems.value = [
     { icon: 'fas fa-plus', text: 'New Chat', onClickMethod: newChat },
@@ -312,9 +356,13 @@ onMounted(() => {
     }
   });
 
+  // 添加粘贴事件监听
+  document.addEventListener('paste', handlePaste);
+
   // Clean up the event listener on unmount
   return () => {
     window.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('paste', handlePaste);
   };
 });
 
@@ -541,7 +589,7 @@ const handleScroll = (event) => {
             </div>
           </div>
 
-          <!-- 图��预览区域 -->
+          <!-- 图预览区域 -->
           <div class="mt-2 flex flex-wrap gap-2">
             <div v-for="image in uploadedImages" :key="image.id" 
                  class="relative group border border-gray-200 rounded-lg p-1">
