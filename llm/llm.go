@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	openai "github.com/sashabaranov/go-openai"
 )
@@ -101,21 +102,38 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 				Content: fillContent(""),
 			})
 		}
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    msgHistory[0].Role,
-			Content: fillContent(msgHistory[0].Content),
-		})
-		for _, msg := range msgHistory[1:] {
-			if preRole == msg.Role {
+		for _, msg := range msgHistory {
+			if msg.Images != "" {
+				message := openai.ChatCompletionMessage{
+					Role:         msg.Role,
+					MultiContent: []openai.ChatMessagePart{},
+				}
+				if msg.Content != "" {
+					message.MultiContent = append(message.MultiContent, openai.ChatMessagePart{
+						Text: fillContent(msg.Content),
+						Type: "text",
+					})
+				}
+				images := strings.Split(msg.Images, "&")
+				for _, image := range images {
+					if image == "" {
+						continue
+					}
+					message.MultiContent = append(message.MultiContent, openai.ChatMessagePart{
+						ImageURL: &openai.ChatMessageImageURL{
+							URL:    image,
+							Detail: openai.ImageURLDetailAuto,
+						},
+						Type: "image_url",
+					})
+				}
+				messages = append(messages, message)
+			} else {
 				messages = append(messages, openai.ChatCompletionMessage{
-					Role:    map[string]string{"user": "assistant", "assistant": "user"}[preRole],
-					Content: fillContent(""),
+					Role:    msg.Role,
+					Content: fillContent(msg.Content),
 				})
 			}
-			messages = append(messages, openai.ChatCompletionMessage{
-				Role:    msg.Role,
-				Content: fillContent(msg.Content),
-			})
 			preRole = msg.Role
 		}
 	}
@@ -138,14 +156,13 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 			},
 		}, messages...)
 	}
-
 	messages = append(messages, userInput.toLLMMessage())
 	dbs, _ := json.Marshal(messages)
 	fmt.Println(string(dbs))
 	fmt.Println("Streaming...", msgHistory, messages)
-	// TODO chat.MaxInputTokens setting here
 	stream(c, model, chat.MaxOutputTokens, messages, callback)
 }
+
 func stream(c *openai.Client, model store.Model, maxOutputTokens int, messages []openai.ChatCompletionMessage, callback func(string)) {
 	ctx := context.Background()
 	req := openai.ChatCompletionRequest{
