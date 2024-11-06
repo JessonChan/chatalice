@@ -103,6 +103,12 @@ func Stream(model store.Model, chat store.Chat, msgHistory []store.Message, user
 			})
 		}
 		for _, msg := range msgHistory {
+			if preRole == msg.Role {
+				messages = append(messages, openai.ChatCompletionMessage{
+					Role:    map[string]string{"user": "assistant", "assistant": "user"}[preRole],
+					Content: fillContent(""),
+				})
+			}
 			if msg.Images != "" {
 				message := openai.ChatCompletionMessage{
 					Role:         msg.Role,
