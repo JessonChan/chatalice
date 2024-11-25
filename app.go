@@ -52,12 +52,19 @@ func (a *App) call(fn string, args string) any {
 		}
 		fmt.Printf("insertModel: %v\n", m)
 		store.InsertModel(m)
+	case "toggleChatPin":
+		return store.ToggleChatPin(args)
 	case "getChats":
-		fmt.Println("getChats", args)
-		lastSeen, _ := strconv.Atoi(args)
-		lastUpdateAt := time.Unix(int64(lastSeen), 0)
-		// list := store.GetChatList()
-		list := store.GetChatListByUpdatedAt(lastUpdateAt)
+		var updateAt time.Time
+		if args != "0" {
+			timestamp, err := strconv.ParseInt(args, 10, 64)
+			if err == nil {
+				updateAt = time.Unix(timestamp, 0)
+			}
+		}
+		fmt.Printf("Getting chats with updateAt: %v\n", updateAt)
+		list := store.GetChats(updateAt)
+		fmt.Printf("Got %d chats from store\n", len(list))
 		resp := []map[string]any{}
 		for _, chat := range list {
 			messages := store.GetMessageList(chat.ChatID)
@@ -75,6 +82,7 @@ func (a *App) call(fn string, args string) any {
 			}
 			resp = append(resp, map[string]any{
 				"id":                 chat.ChatID,
+				"chatId":             chat.ChatID,
 				"title":              chat.Title,
 				"messages":           messageResp,
 				"modelId":            chat.ModelID,
@@ -83,8 +91,10 @@ func (a *App) call(fn string, args string) any {
 				"maxOutputTokens":    chat.MaxOutputTokens,
 				"systemPrompt":       chat.SystemPrompt,
 				"updatedAt":          chat.UpdatedAt.Unix(),
+				"pinned":             chat.Pinned,
 			})
 		}
+		fmt.Printf("Returning %d chats to frontend\n", len(resp))
 		return resp
 	case "updateChatSetting":
 		// TODO why this is so hard and confusing to understand

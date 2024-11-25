@@ -21,7 +21,7 @@ const menuItems = ref([]);
 const showSettings = ref(false);
 const showAbout = ref(false);
 const showSettingsList = ref(false);
-const settings = ref({ name: '', key: '', baseUrl: '' });
+const settings = ref({ name: '', key: '', baseUrl: '', model: '' });
 const submittedSettings = ref([]);
 const showChatSetting = ref(false);
 const selectTitle= ref('');
@@ -239,31 +239,56 @@ const refreshModelList = () => {
   })
 }
 
-const getChats = (isIntialLoad = false) => {
-  let lastSeen = new Date().getTime() / 1000;
-  if (chats.value.length > 0) {
-    chats.value.forEach(item => {
-      console.log(item.updatedAt, new Date(item.updatedAt * 1000), item.updatedAt < lastSeen)
-      if (item.updatedAt < lastSeen) {
-        lastSeen = new Date(item.updatedAt * 1000).getTime() / 1000;
+const getChats = (isInitialLoad = false) => {
+  let lastSeen = 0;  // Start with 0 for initial load
+  if (!isInitialLoad && chats.value.length > 0) {
+    // Find the last unpinned chat's timestamp
+    for (let i = chats.value.length - 1; i >= 0; i--) {
+      const chat = chats.value[i];
+      if (!chat.pinned) {
+        lastSeen = chat.updatedAt;
+        break;
       }
-    })
-  }
-  Call("getChats", `${Math.floor(lastSeen)}`).then(data => {
-    let response = JSON.parse(data);
-    console.log(response);
-    chats.value = [
-      ...chats.value,
-      ...response.map(item => ({ ...item }))
-    ]
-    if (chats.value.length == 0) {
-      newChat();
     }
-    if (isIntialLoad && chats.value.length > 0) {
+  }
+
+  console.log('Fetching chats with lastSeen:', lastSeen);
+  Call("getChats", lastSeen.toString()).then(data => {
+    let response = JSON.parse(data);
+    console.log('Got chats response:', response);
+    
+    if (isInitialLoad) {
+      console.log('Initial load - replacing all chats');
+      chats.value = response;
+    } else if (response.length > 0) {
+      console.log('Appending', response.length, 'new chats');
+      // Only append new unpinned chats if we got any
+      const existingIds = new Set(chats.value.map(chat => chat.chatId));
+      const newChats = response.filter(chat => !existingIds.has(chat.chatId));
+      if (newChats.length > 0) {
+        chats.value = [...chats.value, ...newChats];
+      }
+    }
+    
+    console.log('Current chat list:', chats.value);
+    
+    if (chats.value.length === 0) {
+      console.log('No chats found, creating new chat');
+      newChat();
+    } else if (isInitialLoad) {
+      console.log('Selecting first chat');
       selectChat(0);
     }
-  })
-}
+  });
+};
+
+const togglePin = async (chatId) => {
+  console.log('Toggling pin for chat:', chatId);
+  await Call("toggleChatPin", chatId.toString());
+  // Refresh the entire chat list to get the new order
+  getChats(true);
+};
+
 const handleChatsScroll = (event) => {
   const { scrollTop, clientHeight, scrollHeight } = event.target;
   if (scrollTop + clientHeight >= scrollHeight - 50) {
@@ -495,12 +520,15 @@ const handleScroll = (event) => {
         @scroll="handleChatsScroll">
         <div class="p-4">
           <ul>
-            <li v-for="(chat, index) in chats" :key="index" class="mb-2">
+            <li v-for="(chat, index) in chats" :key="chat.chatId" class="mb-2">
               <div
                 :class="['flex items-center p-2 cursor-pointer rounded', currentChatIndex === index ? 'bg-gray-200' : '']"
                 @click="selectChat(index)">
-                <!-- <i class="fas fa-file-alt mr-2"></i> -->
-                <span class="chat-title" :title="chat.title">{{ chat.title }}</span>
+                <span class="chat-title flex-1" :title="chat.title">{{ chat.title }}</span>
+                <button @click.stop="togglePin(chat.chatId)" 
+                  :class="['ml-2', chat.pinned ? 'text-yellow-500 hover:text-yellow-600' : 'text-gray-400 hover:text-gray-600']">
+                  <i class="fas fa-thumbtack"></i>
+                </button>
               </div>
             </li>
           </ul>

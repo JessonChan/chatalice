@@ -48,13 +48,20 @@ func getDb() *gorm.DB {
 		panic("failed to connect database")
 	}
 	// Migrate the schema
-	if dbInit {
-		db.AutoMigrate(&Model{})
-		db.AutoMigrate(&Chat{})
-		db.AutoMigrate(&Message{})
-	}
+	_ = dbInit
+	db.AutoMigrate(&Model{})
+	db.AutoMigrate(&Chat{})
+	db.AutoMigrate(&Message{})
 	sqlDB = db
 	return db
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
 }
 
 type Model struct {
@@ -69,13 +76,14 @@ type Model struct {
 
 type Chat struct {
 	gorm.Model
+	ChatID             uint   `json:"chatId" gorm:"uniqueIndex"`
 	Title              string `json:"title"`
-	ChatID             uint   `json:"chatId"` // is a unique id,created by client
 	ModelID            uint   `json:"modelId"`
 	ConversationRounds int    `json:"conversationRounds"`
 	MaxInputTokens     int    `json:"maxInputTokens"`
 	MaxOutputTokens    int    `json:"maxOutputTokens"`
 	SystemPrompt       string `json:"systemPrompt"`
+	Pinned             bool   `json:"pinned"`
 }
 
 var DefaulChatConfig = Chat{
@@ -84,6 +92,7 @@ var DefaulChatConfig = Chat{
 	MaxInputTokens:     4096,
 	MaxOutputTokens:    4096,
 	SystemPrompt:       "You are a helpful assistant.",
+	Pinned:             false,
 }
 
 func NewChat(chatId, modelId uint) Chat {
@@ -95,6 +104,7 @@ func NewChat(chatId, modelId uint) Chat {
 		MaxInputTokens:     4096,
 		MaxOutputTokens:    4096,
 		SystemPrompt:       "You are a helpful assistant.",
+		Pinned:             false,
 	}
 }
 
@@ -136,10 +146,47 @@ func GetModelByID(id uint) Model {
 	return model
 }
 
-func GetChatList() []Chat {
+func GetChats(updateAt time.Time) []Chat {
 	db := getDb()
 	var chats []Chat
-	db.Order("id desc").Find(&chats)
+
+	if updateAt.IsZero() {
+		fmt.Println("Getting initial chats load...")
+		// Get all pinned chats (no pagination)
+		var pinnedChats []Chat
+		if err := db.Where("pinned = ?", true).
+			Order("updated_at desc").
+			Find(&pinnedChats).Error; err != nil {
+			fmt.Printf("Error getting pinned chats: %v\n", err)
+		}
+		fmt.Printf("Found %d pinned chats\n", len(pinnedChats))
+
+		// Get first page of unpinned chats
+		var unpinnedChats []Chat
+		if err := db.Where("pinned = ? or pinned is null", false).
+			Order("updated_at desc").
+			Limit(20).
+			Find(&unpinnedChats).Error; err != nil {
+			fmt.Printf("Error getting unpinned chats: %v\n", err)
+		}
+		fmt.Printf("Found %d unpinned chats\n", len(unpinnedChats))
+
+		// Combine both lists
+		chats = append(pinnedChats, unpinnedChats...)
+		fmt.Printf("Returning %d total chats\n", len(chats))
+		return chats
+	}
+
+	fmt.Printf("Getting paginated chats with updateAt: %v\n", updateAt)
+	// Only get next page of unpinned chats for pagination
+	if err := db.Where("pinned = ? or pinned is null AND updated_at < ?", false, updateAt).
+		Order("updated_at desc").
+		Limit(20).
+		Find(&chats).Error; err != nil {
+		fmt.Printf("Error getting paginated chats: %v\n", err)
+	}
+	fmt.Printf("Found %d chats for pagination\n", len(chats))
+
 	return chats
 }
 
@@ -187,6 +234,16 @@ func DeleteChatByID(id uint) {
 	c := &Chat{}
 	c.ID = id
 	db.Delete(c)
+}
+
+func ToggleChatPin(chatId string) error {
+	var chat Chat
+	db := getDb()
+	if err := db.Where("chat_id = ?", chatId).First(&chat).Error; err != nil {
+		return err
+	}
+	chat.Pinned = !chat.Pinned
+	return db.Save(&chat).Error
 }
 
 func GetMessageList(chatID uint) []Message {
